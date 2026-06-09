@@ -36,7 +36,7 @@
                 <button onclick="toggleWindow('win-notes')">📝 Notes</button>
                 <button onclick="toggleWindow('win-calendar')">📅 Calendar</button>
                 <button onclick="toggleWindow('win-calc')">🧮 Calculator</button>
-                <button onclick="toggleWindow('win-ai')">🤖 Gemini AI</button>
+                <button onclick="toggleWindow('win-todo')">✅ Todo</button>
             </div>
             <span id="clock">00:00:00 AM</span>
         </div>
@@ -80,7 +80,7 @@
                 <button class="close-btn" onclick="toggleWindow('win-calc')">❌</button>
             </div>
             <div class="window-content">
-                <input type="text" id="calc-display" readonly style="width: 100%; background: #020813; color: #33ff33; border: 1px solid #33ff33; text-align: right; padding: 10px; font-size: 1.2rem; margin-bottom: 10px;">
+                <input type="text" id="calc-display" readonly style="width: 100%; background: #020813; color: #ff3333; border: 1px solid #ff3333; text-align: right; padding: 10px; font-size: 1.2rem; margin-bottom: 10px;">
                 <div class="calc-buttons">
                     <button onclick="clearCalc()">C</button>
                     <button onclick="pressCalc('/')">/</button>
@@ -107,19 +107,17 @@
 
 
         
-        <div id="win-ai" class="window" style="top: 340px; left: 400px; width: 420px; min-height: 320px;">
+        <div id="win-todo" class="window" style="top: 340px; left: 400px; width: 360px; min-height: 300px;">
             <div class="window-header">
-                <span class="title">🤖 Gemini Space Intelligence</span>
-                <button class="close-btn" onclick="toggleWindow('win-ai')">❌</button>
+                <span class="title">✅ Todo List</span>
+                <button class="close-btn" onclick="toggleWindow('win-todo')">❌</button>
             </div>
-            <div class="window-content" style="display: flex; flex-direction: column; height: 100%;">
-                <div id="ai-chatlog" style="flex-grow: 1; border: 1px solid #33ff33; padding: 8px; background: rgba(0,0,0,0.3); overflow-y: auto; font-size: 0.85rem; min-height: 180px; margin-bottom: 8px;">
-                    <p style="color: #888;">System: Core uplink secure. Ask Gemini anything.</p>
-                </div>
+            <div class="window-content" style="display: flex; flex-direction: column; gap: 8px;">
                 <div style="display: flex; gap: 4px;">
-                    <input type="text" id="ai-input" placeholder="Ask Gemini..." style="flex-grow: 1; background: #020813; color: #33ff33; border: 1px solid #33ff33; padding: 6px;">
-                    <button onclick="askGemini()" style="margin-top: 0; padding: 6px 12px;">Send</button>
+                    <input type="text" id="todo-input" placeholder="Add a task..." style="flex-grow: 1; background: #020813; color: #ff3333; border: 1px solid #ff3333; padding: 6px;">
+                    <button onclick="addTodo()" style="margin-top: 0; padding: 6px 12px;">Add</button>
                 </div>
+                <div id="todo-list" style="border: 1px solid #ff3333; padding: 8px; background: rgba(0,0,0,0.3); min-height: 180px; max-height: 300px; overflow-y: auto;"></div>
             </div>
         </div>
 
