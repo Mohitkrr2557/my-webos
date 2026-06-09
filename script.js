@@ -1,4 +1,4 @@
-// === CORE BOOT MACHINE ENGINE ===
+
 const bootBtn = document.getElementById('boot-btn');
 const bootScreen = document.getElementById('boot-screen');
 const desktop = document.getElementById('desktop');
@@ -9,7 +9,9 @@ bootBtn.addEventListener('click', () => {
     buildCalendar(); 
 });
 
-// === SYSTEM DIGITAL TASKBAR CLOCK ===
+
+
+
 function updateClock() {
     const now = new Date();
     let hours = now.getHours();
@@ -27,7 +29,9 @@ function updateClock() {
 setInterval(updateClock, 1000);
 updateClock();
 
-// === WINDOW GRAPHICS CONTROLLER ===
+
+
+
 function toggleWindow(id) {
     const win = document.getElementById(id);
     if (win.classList.contains('hidden')) {
@@ -67,7 +71,10 @@ document.querySelectorAll('.window').forEach(win => {
     });
 });
 
-// === APP MODULE 1: CALENDAR ===
+
+
+
+
 function buildCalendar() {
     const now = new Date();
     const year = now.getFullYear();
@@ -96,7 +103,8 @@ function buildCalendar() {
     }
 }
 
-// === APP MODULE 2: CALCULATOR ===
+
+
 const calcDisplay = document.getElementById('calc-display');
 
 function pressCalc(val) {
@@ -115,7 +123,8 @@ function calculateResult() {
     }
 }
 
-// === APP MODULE 3: GEMINI AI BOT UPLINK ===
+
+
 const MY_API_KEY = "AIzaSy" + "AQ.Ab8RN6J14MMh9zO7CFCSCHoZ2VxYVknTZslFWZ98Hf-fs3V8SA";
 
 function askGemini() {
@@ -129,8 +138,10 @@ function askGemini() {
     inputEl.value = '';
     chatlog.scrollTop = chatlog.scrollHeight;
     
-    // Fixed URL address path
-    const url = `https://googleapis.com{MY_API_KEY}`;
+
+
+    
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${MY_API_KEY}`;
     
     const payload = {
         contents: [{
@@ -138,6 +149,7 @@ function askGemini() {
         }]
     };
     
+
     fetch(url, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
