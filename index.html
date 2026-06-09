@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Cyber Space WebOS</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <!-- PART 1: WELCOME BOOT SCREEN -->
+    <div id="boot-screen" class="screen">
+        <div class="boot-card">
+            <h1>🚀 CYBER OS v1.0</h1>
+            <p>Welcome, Space Cadet!</p>
+            <button id="boot-btn">BOOT SYSTEM</button>
+        </div>
+    </div>
+
+    <!-- MAIN DESKTOP LAYER -->
+    <div id="desktop" class="screen hidden">
+        
+        <!-- PART 2: TOP TASKBAR & CLOCK -->
+        <div id="taskbar">
+            <span class="logo">🌌 SpaceOS</span>
+            <div class="taskbar-buttons">
+                <button onclick="toggleWindow('win-notes')">📝 Notes</button>
+                <button onclick="toggleWindow('win-nasa')">🛰️ NASA Pic</button>
+            </div>
+            <span id="clock">00:00:00 AM</span>
+        </div>
+
+        <!-- PART 3 & 4: WINDOW 1 (NOTES APP) -->
+        <div id="win-notes" class="window" style="top: 100px; left: 100px;">
+            <div class="window-header">
+                <span class="title">📝 Space Notepad</span>
+                <button class="close-btn" onclick="toggleWindow('win-notes')">❌</button>
+            </div>
+            <div class="window-content">
+                <textarea placeholder="Type your space captains log here..."></textarea>
+            </div>
+        </div>
+
+        <!-- PART 5 / SUBMISSION REQUIREMENT: CUSTOM NASA APP -->
+        <div id="win-nasa" class="window" style="top: 150px; left: 450px;">
+            <div class="window-header">
+                <span class="title">🛰️ NASA Space View (Custom Feature!)</span>
+                <button class="close-btn" onclick="toggleWindow('win-nasa')">❌</button>
+            </div>
+            <div class="window-content nasa-box">
+                <p>Fetching today's deep space image...</p>
+                <img id="nasa-img" src="" alt="NASA Space Pic" style="display:none; width:100%; border-radius:4px;">
+            </div>
+        </div>
+
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
