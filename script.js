@@ -11,7 +11,6 @@ bootBtn.addEventListener('click', () => {
 
 
 
-
 function updateClock() {
     const now = new Date();
     let hours = now.getHours();
@@ -32,6 +31,7 @@ updateClock();
 
 
 
+
 function toggleWindow(id) {
     const win = document.getElementById(id);
     if (win.classList.contains('hidden')) {
@@ -42,11 +42,16 @@ function toggleWindow(id) {
     }
 }
 
+
+
+
 let highestZ = 10;
 function bringToFront(win) {
     highestZ++;
     win.style.zIndex = highestZ;
 }
+
+
 
 document.querySelectorAll('.window').forEach(win => {
     const header = win.querySelector('.window-header');
@@ -56,10 +61,15 @@ document.querySelectorAll('.window').forEach(win => {
         let offsetX = e.clientX - win.offsetLeft;
         let offsetY = e.clientY - win.offsetTop;
         
+
+        
         function mouseMoveHandler(e) {
             win.style.left = (e.clientX - offsetX) + 'px';
             win.style.top = (e.clientY - offsetY) + 'px';
         }
+
+
+
         
         function mouseUpHandler() {
             document.removeEventListener('mousemove', mouseMoveHandler);
@@ -80,22 +90,32 @@ function buildCalendar() {
     const year = now.getFullYear();
     const month = now.getMonth();
     
+
+    
     const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
     document.getElementById('calendar-header').innerText = `${monthNames[month]} ${year}`;
+    
+    
     
     const daysContainer = document.getElementById('calendar-days');
     daysContainer.innerHTML = '';
     
+    
     const totalDays = new Date(year, month + 1, 0).getDate();
+    
+    
     
     for (let i = 1; i <= totalDays; i++) {
         const daySquare = document.createElement('div');
         daySquare.innerText = i;
         daySquare.style.padding = '5px';
-        daySquare.style.border = '1px solid rgba(51, 255, 51, 0.2)';
+        daySquare.style.border = '1px solid rgba(255, 51, 51, 0.2)';
+
+
+
         
         if (i === now.getDate()) {
-            daySquare.style.backgroundColor = '#33ff33';
+            daySquare.style.backgroundColor = '#ff3333';
             daySquare.style.color = '#020813';
             daySquare.style.fontWeight = 'bold';
         }
@@ -125,44 +145,56 @@ function calculateResult() {
 
 
 
-const MY_API_KEY = "AIzaSy" + "AQ.Ab8RN6J14MMh9zO7CFCSCHoZ2VxYVknTZslFWZ98Hf-fs3V8SA";
 
-function askGemini() {
-    const inputEl = document.getElementById('ai-input');
-    const chatlog = document.getElementById('ai-chatlog');
-    const userPrompt = inputEl.value.trim();
-    
-    if (!userPrompt) return;
-    
-    chatlog.innerHTML += `<p style="margin-top:4px;"><b>You:</b> ${userPrompt}</p>`;
-    inputEl.value = '';
-    chatlog.scrollTop = chatlog.scrollHeight;
-    
-
+function addTodo() {
+    const input = document.getElementById('todo-input');
+    const list = document.getElementById('todo-list');
+    const text = input.value.trim();
 
     
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${MY_API_KEY}`;
-    
-    const payload = {
-        contents: [{
-            parts: [{ text: userPrompt }]
-        }]
+    if (!text) return;
+
+    const item = document.createElement('div');
+    item.style.display = 'flex';
+    item.style.alignItems = 'center';
+    item.style.gap = '8px';
+    item.style.padding = '4px 0';
+    item.style.borderBottom = '1px solid rgba(255, 51, 51, 0.2)';
+
+    const cb = document.createElement('input');
+    cb.type = 'checkbox';
+    cb.style.accentColor = '#ff3333';
+    cb.onchange = () => {
+        label.style.textDecoration = cb.checked ? 'line-through' : 'none';
+        label.style.opacity = cb.checked ? '0.5' : '1';
     };
-    
 
-    fetch(url, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-    })
-    .then(res => res.json())
-    .then(data => {
-        const aiText = data.candidates[0].content.parts[0].text;
-        chatlog.innerHTML += `<p style="margin-top:4px; color:#a3ffa3;"><b>Gemini:</b> ${aiText}</p>`;
-        chatlog.scrollTop = chatlog.scrollHeight;
-    })
-    .catch(err => {
-        chatlog.innerHTML += `<p style="margin-top:4px; color:#ff3333;"><b>Error:</b> Chatbot failed to respond.</p>`;
-        console.error(err);
-    });
+    
+    
+    
+    const label = document.createElement('span');
+    label.textContent = text;
+    label.style.flexGrow = '1';
+
+    
+    const del = document.createElement('button');
+    del.textContent = '✕';
+    del.style.margin = '0';
+    del.style.padding = '2px 6px';
+    del.style.fontSize = '0.7rem';
+    del.onclick = () => item.remove();
+
+    
+    
+    item.appendChild(cb);
+    item.appendChild(label);
+    item.appendChild(del);
+    list.appendChild(item);
+
+    input.value = '';
+    input.focus();
 }
+
+document.getElementById('todo-input').addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') addTodo();
+});
