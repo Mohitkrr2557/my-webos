@@ -8,10 +8,6 @@
 </head>
 <body>
 
-
-
-
-    
     <div id="boot-screen" class="screen">
         <div class="boot-card">
             <h1>🚀 CYBER OS v2.0</h1>
@@ -20,16 +16,8 @@
         </div>
     </div>
 
-
-
-
-
-
-    
     <div id="desktop" class="screen hidden">
 
-
-        
         <div id="taskbar">
             <span class="logo">🌌 SpaceOS</span>
             <div class="taskbar-buttons">
@@ -41,10 +29,6 @@
             <span id="clock">00:00:00 AM</span>
         </div>
 
-
-
-
-        
         <div id="win-notes" class="window" style="top: 80px; left: 40px;">
             <div class="window-header">
                 <span class="title">📝 Space Notepad</span>
@@ -55,9 +39,6 @@
             </div>
         </div>
 
-
-
-        
         <div id="win-calendar" class="window" style="top: 80px; left: 400px; width: 350px;">
             <div class="window-header">
                 <span class="title">📅 Space Calendar</span>
@@ -69,18 +50,13 @@
             </div>
         </div>
 
-
-
-
-
-        
         <div id="win-calc" class="window" style="top: 360px; left: 40px; width: 260px; min-height: 280px;">
             <div class="window-header">
                 <span class="title">🧮 Calculator</span>
                 <button class="close-btn" onclick="toggleWindow('win-calc')">❌</button>
             </div>
             <div class="window-content">
-                <input type="text" id="calc-display" readonly style="width: 100%; background: #020813; color: #ff3333; border: 1px solid #ff3333; text-align: right; padding: 10px; font-size: 1.2rem; margin-bottom: 10px;">
+                <input type="text" id="calc-display" readonly style="width: 100%; background: #020813; color: #33ff33; border: 1px solid #33ff33; text-align: right; padding: 10px; font-size: 1.2rem; margin-bottom: 10px;">
                 <div class="calc-buttons">
                     <button onclick="clearCalc()">C</button>
                     <button onclick="pressCalc('/')">/</button>
@@ -102,11 +78,6 @@
             </div>
         </div>
 
-
-
-
-
-        
         <div id="win-todo" class="window" style="top: 340px; left: 400px; width: 360px; min-height: 300px;">
             <div class="window-header">
                 <span class="title">✅ Todo List</span>
@@ -114,10 +85,10 @@
             </div>
             <div class="window-content" style="display: flex; flex-direction: column; gap: 8px;">
                 <div style="display: flex; gap: 4px;">
-                    <input type="text" id="todo-input" placeholder="Add a task..." style="flex-grow: 1; background: #020813; color: #ff3333; border: 1px solid #ff3333; padding: 6px;">
+                    <input type="text" id="todo-input" placeholder="Add a task..." style="flex-grow: 1; background: #020813; color: #33ff33; border: 1px solid #33ff33; padding: 6px;">
                     <button onclick="addTodo()" style="margin-top: 0; padding: 6px 12px;">Add</button>
                 </div>
-                <div id="todo-list" style="border: 1px solid #ff3333; padding: 8px; background: rgba(0,0,0,0.3); min-height: 180px; max-height: 300px; overflow-y: auto;"></div>
+                <div id="todo-list" style="border: 1px solid #33ff33; padding: 8px; background: rgba(0,0,0,0.3); min-height: 180px; max-height: 300px; overflow-y: auto;"></div>
             </div>
         </div>
 
