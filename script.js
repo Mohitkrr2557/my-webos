@@ -1,167 +1,208 @@
-* {
-    box-sizing: border-box;
-    margin: 0;
-    padding: 0;
-    font-family: 'Courier New', Courier, monospace;
-    user-select: none;
+
+const bootBtn = document.getElementById('boot-btn');
+const bootScreen = document.getElementById('boot-screen');
+const desktop = document.getElementById('desktop');
+
+
+
+bootBtn.addEventListener('click', () => {
+    bootScreen.classList.add('hidden');
+    desktop.classList.remove('hidden');
+    buildCalendar(); 
+});
+
+
+
+
+function updateClock() {
+    const now = new Date();
+    let hours = now.getHours();
+    let minutes = now.getMinutes();
+    let seconds = now.getSeconds();
+    const ampm = hours >= 12 ? 'PM' : 'AM';
+
+
+    
+    hours = hours % 12;
+    hours = hours ? hours : 12; 
+    minutes = minutes < 10 ? '0' + minutes : minutes;
+    seconds = seconds < 10 ? '0' + seconds : seconds;
+    
+    document.getElementById('clock').innerText = `${hours}:${minutes}:${seconds} ${ampm}`;
+}
+
+
+setInterval(updateClock, 1000);
+updateClock();
+
+
+
+
+function toggleWindow(id) {
+    const win = document.getElementById(id);
+    if (win.classList.contains('hidden')) {
+        win.classList.remove('hidden');
+        bringToFront(win);
+    } else {
+        win.classList.add('hidden');
+    }
 }
 
 
 
-body, html {
-    width: 100%;
-    height: 100%;
-    overflow: hidden;
-    background-color: #020813;
-    color: #33ff33;
+let highestZ = 10;
+function bringToFront(win) {
+    highestZ++;
+    win.style.zIndex = highestZ;
 }
 
 
-.screen {
-    width: 100%;
-    height: 100%;
-    position: absolute;
-    top: 0;
-    left: 0;
+
+document.querySelectorAll('.window').forEach(win => {
+    const header = win.querySelector('.window-header');
+    win.addEventListener('mousedown', () => bringToFront(win));
+
+
+    
+    header.addEventListener('mousedown', (e) => {
+        let offsetX = e.clientX - win.offsetLeft;
+        let offsetY = e.clientY - win.offsetTop;
+
+
+        
+        function mouseMoveHandler(e) {
+            win.style.left = (e.clientX - offsetX) + 'px';
+            win.style.top = (e.clientY - offsetY) + 'px';
+        }
+
+
+        
+        function mouseUpHandler() {
+            document.removeEventListener('mousemove', mouseMoveHandler);
+            document.removeEventListener('mouseup', mouseUpHandler);
+        }
+        
+        document.addEventListener('mousemove', mouseMoveHandler);
+        document.addEventListener('mouseup', mouseUpHandler);
+    });
+});
+
+
+
+
+
+function buildCalendar() {
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = now.getMonth();
+
+
+    
+    const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+    document.getElementById('calendar-header').innerText = `${monthNames[month]} ${year}`;
+
+
+    
+    const daysContainer = document.getElementById('calendar-days');
+    daysContainer.innerHTML = '';
+
+
+    
+    const totalDays = new Date(year, month + 1, 0).getDate();
+
+
+
+    
+    for (let i = 1; i <= totalDays; i++) {
+        const daySquare = document.createElement('div');
+        daySquare.innerText = i;
+        daySquare.style.padding = '5px';
+        daySquare.style.border = '1px solid rgba(51, 255, 51, 0.2)';
+
+
+
+        
+        if (i === now.getDate()) {
+            daySquare.style.backgroundColor = '#33ff33';
+            daySquare.style.color = '#020813';
+            daySquare.style.fontWeight = 'bold';
+        }
+        daysContainer.appendChild(daySquare);
+    }
 }
 
-.hidden {
-    display: none !important;
+
+
+
+
+const calcDisplay = document.getElementById('calc-display');
+
+function pressCalc(val) {
+    calcDisplay.value += val;
 }
 
-#boot-screen {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    background: radial-gradient(circle, #0a1931 0%, #020813 100%);
+function clearCalc() {
+    calcDisplay.value = '';
 }
 
-.boot-card {
-    text-align: center;
-    padding: 40px;
-    border: 2px solid #33ff33;
-    background-color: rgba(2, 8, 19, 0.8);
-    box-shadow: 0 0 20px #33ff33;
-    border-radius: 8px;
+function calculateResult() {
+    try {
+        calcDisplay.value = eval(calcDisplay.value);
+    } catch (err) {
+        calcDisplay.value = 'ERR';
+    }
 }
 
-.boot-card h1 {
-    font-size: 2rem;
-    margin-bottom: 10px;
-    text-shadow: 0 0 10px #33ff33;
-}
 
-button {
-    background-color: #020813;
-    color: #33ff33;
-    border: 1px solid #33ff33;
-    padding: 10px 20px;
-    font-size: 1rem;
-    cursor: pointer;
-    margin-top: 20px;
-    border-radius: 4px;
-}
 
-button:hover {
-    background-color: #33ff33;
-    color: #020813;
-    box-shadow: 0 0 10px #33ff33;
-}
 
-#desktop {
-    background-image: radial-gradient(rgba(51, 255, 51, 0.1) 1px, transparent 0);
-    background-size: 24px 24px;
-}
 
-#taskbar {
-    width: 100%;
-    height: 40px;
-    background-color: #0a1931;
-    border-bottom: 2px solid #33ff33;
-    position: fixed;
-    top: 0;
-    left: 0;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 0 15px;
-    z-index: 9999;
-}
 
-.taskbar-buttons button {
-    margin: 0 2px;
-    padding: 4px 8px;
-    font-size: 0.8rem;
-}
+const SCRAMBLED_KEY = "AQ.Ab8RN6J14MMh9zO7CFCSCHoZ2VxYVknTZslFWZ98Hf-fs3V8SA";
 
-.window {
-    position: absolute;
-    width: 320px;
-    min-height: 200px;
-    background-color: #020813;
-    border: 2px solid #33ff33;
-    box-shadow: 0 5px 15px rgba(0,0,0,0.5);
-    border-radius: 6px;
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
-}
 
-.window-header {
-    background-color: #0a1931;
-    border-bottom: 2px solid #33ff33;
-    padding: 8px 10px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    cursor: move;
-}
 
-.title {
-    font-weight: bold;
-    font-size: 0.9rem;
-}
+function askGemini() {
+    const apiKey = atob(SCRAMBLED_KEY);
+    const inputEl = document.getElementById('ai-input');
+    const chatlog = document.getElementById('ai-chatlog');
+    const userPrompt = inputEl.value.trim();
+    
 
-.close-btn {
-    margin: 0;
-    padding: 2px 6px;
-    font-size: 0.7rem;
-    border: none;
-    background: transparent;
-}
+    
+    if (!userPrompt) return;
+    
+    chatlog.innerHTML += `<p style="margin-top:4px;"><b>You:</b> ${userPrompt}</p>`;
+    inputEl.value = '';
+    chatlog.scrollTop = chatlog.scrollHeight;
+    
+   
+    const url = `https://googleapis.com{apiKey}`;
 
-.window-content {
-    flex-grow: 1;
-    padding: 10px;
-    background-color: rgba(2, 8, 19, 0.9);
-}
 
-textarea {
-    width: 100%;
-    height: 120px;
-    background: transparent;
-    color: #33ff33;
-    border: none;
-    outline: none;
-    resize: none;
-    font-family: monospace;
-}
+    
+    const payload = {
+        contents: [{
+            parts: [{ text: userPrompt }]
+        }]
+    };
 
-.calendar-grid {
-    display: grid;
-    grid-template-columns: repeat(7, 1fr);
-    gap: 5px;
-    text-align: center;
-    font-size: 0.85rem;
-}
 
-.calc-buttons {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 6px;
-}
 
-.calc-buttons button {
-    margin: 0;
-    padding: 12px 0;
+    
+    fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+    })
+    .then(res => res.json())
+    .then(data => {
+        const aiText = data.candidates[0].content.parts[0].text;
+        chatlog.innerHTML += `<p style="margin-top:4px; color:#a3ffa3;"><b>Gemini:</b> ${aiText}</p>`;
+        chatlog.scrollTop = chatlog.scrollHeight;
+    })
+    .catch(err => {
+        chatlog.innerHTML += `<p style="margin-top:4px; color:#ff3333;"><b>Error:</b> Uplink failed. Please verify API key configuration.</p>`;
+        console.error(err);
+    });
 }
