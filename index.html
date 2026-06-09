@@ -8,30 +8,44 @@
 </head>
 <body>
 
-    <!-- PART 1: WELCOME BOOT SCREEN -->
+
+
+
+    
     <div id="boot-screen" class="screen">
         <div class="boot-card">
-            <h1>🚀 CYBER OS v1.0</h1>
+            <h1>🚀 CYBER OS v2.0</h1>
             <p>Welcome, Space Cadet!</p>
             <button id="boot-btn">BOOT SYSTEM</button>
         </div>
     </div>
 
-    <!-- MAIN DESKTOP LAYER -->
+
+
+
+
+
+    
     <div id="desktop" class="screen hidden">
+
+
         
-        <!-- PART 2: TOP TASKBAR & CLOCK -->
         <div id="taskbar">
             <span class="logo">🌌 SpaceOS</span>
             <div class="taskbar-buttons">
                 <button onclick="toggleWindow('win-notes')">📝 Notes</button>
-                <button onclick="toggleWindow('win-nasa')">🛰️ NASA Pic</button>
+                <button onclick="toggleWindow('win-calendar')">📅 Calendar</button>
+                <button onclick="toggleWindow('win-calc')">🧮 Calculator</button>
+                <button onclick="toggleWindow('win-ai')">🤖 Gemini AI</button>
             </div>
             <span id="clock">00:00:00 AM</span>
         </div>
 
-        <!-- PART 3 & 4: WINDOW 1 (NOTES APP) -->
-        <div id="win-notes" class="window" style="top: 100px; left: 100px;">
+
+
+
+        
+        <div id="win-notes" class="window" style="top: 80px; left: 40px;">
             <div class="window-header">
                 <span class="title">📝 Space Notepad</span>
                 <button class="close-btn" onclick="toggleWindow('win-notes')">❌</button>
@@ -41,15 +55,71 @@
             </div>
         </div>
 
-        <!-- PART 5 / SUBMISSION REQUIREMENT: CUSTOM NASA APP -->
-        <div id="win-nasa" class="window" style="top: 150px; left: 450px;">
+
+
+        
+        <div id="win-calendar" class="window" style="top: 80px; left: 400px; width: 350px;">
             <div class="window-header">
-                <span class="title">🛰️ NASA Space View (Custom Feature!)</span>
-                <button class="close-btn" onclick="toggleWindow('win-nasa')">❌</button>
+                <span class="title">📅 Space Calendar</span>
+                <button class="close-btn" onclick="toggleWindow('win-calendar')">❌</button>
             </div>
-            <div class="window-content nasa-box">
-                <p>Fetching today's deep space image...</p>
-                <img id="nasa-img" src="" alt="NASA Space Pic" style="display:none; width:100%; border-radius:4px;">
+            <div class="window-content">
+                <div id="calendar-header" style="text-align: center; font-weight: bold; margin-bottom: 10px;"></div>
+                <div class="calendar-grid" id="calendar-days"></div>
+            </div>
+        </div>
+
+
+
+
+
+        
+        <div id="win-calc" class="window" style="top: 360px; left: 40px; width: 260px; min-height: 280px;">
+            <div class="window-header">
+                <span class="title">🧮 Calculator</span>
+                <button class="close-btn" onclick="toggleWindow('win-calc')">❌</button>
+            </div>
+            <div class="window-content">
+                <input type="text" id="calc-display" readonly style="width: 100%; background: #020813; color: #33ff33; border: 1px solid #33ff33; text-align: right; padding: 10px; font-size: 1.2rem; margin-bottom: 10px;">
+                <div class="calc-buttons">
+                    <button onclick="clearCalc()">C</button>
+                    <button onclick="pressCalc('/')">/</button>
+                    <button onclick="pressCalc('*')">*</button>
+                    <button onclick="pressCalc('-')">-</button>
+                    <button onclick="pressCalc('7')">7</button>
+                    <button onclick="pressCalc('8')">8</button>
+                    <button onclick="pressCalc('9')">9</button>
+                    <button onclick="pressCalc('+')">+</button>
+                    <button onclick="pressCalc('4')">4</button>
+                    <button onclick="pressCalc('5')">5</button>
+                    <button onclick="pressCalc('6')">6</button>
+                    <button onclick="calculateResult()">=</button>
+                    <button onclick="pressCalc('1')">1</button>
+                    <button onclick="pressCalc('2')">2</button>
+                    <button onclick="pressCalc('3')">3</button>
+                    <button onclick="pressCalc('0')">0</button>
+                </div>
+            </div>
+        </div>
+
+
+
+
+
+        
+        <div id="win-ai" class="window" style="top: 340px; left: 400px; width: 420px; min-height: 320px;">
+            <div class="window-header">
+                <span class="title">🤖 Gemini Space Intelligence</span>
+                <button class="close-btn" onclick="toggleWindow('win-ai')">❌</button>
+            </div>
+            <div class="window-content" style="display: flex; flex-direction: column; height: 100%;">
+                <div id="ai-chatlog" style="flex-grow: 1; border: 1px solid #33ff33; padding: 8px; background: rgba(0,0,0,0.3); overflow-y: auto; font-size: 0.85rem; min-height: 180px; margin-bottom: 8px;">
+                    <p style="color: #888;">System: Core uplink secure. Ask Gemini anything.</p>
+                </div>
+                <div style="display: flex; gap: 4px;">
+                    <input type="text" id="ai-input" placeholder="Ask Gemini..." style="flex-grow: 1; background: #020813; color: #33ff33; border: 1px solid #33ff33; padding: 6px;">
+                    <button onclick="askGemini()" style="margin-top: 0; padding: 6px 12px;">Send</button>
+                </div>
             </div>
         </div>
 
