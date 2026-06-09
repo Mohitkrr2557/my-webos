@@ -11,7 +11,7 @@ body, html {
     height: 100%;
     overflow: hidden;
     background-color: #020813;
-    color: #ff3333;
+    color: #33ff33;
 }
 
 .screen {
@@ -36,22 +36,22 @@ body, html {
 .boot-card {
     text-align: center;
     padding: 40px;
-    border: 2px solid #ff3333;
+    border: 2px solid #33ff33;
     background-color: rgba(2, 8, 19, 0.8);
-    box-shadow: 0 0 20px #ff3333;
+    box-shadow: 0 0 20px #33ff33;
     border-radius: 8px;
 }
 
 .boot-card h1 {
     font-size: 2rem;
     margin-bottom: 10px;
-    text-shadow: 0 0 10px #ff3333;
+    text-shadow: 0 0 10px #33ff33;
 }
 
 button {
     background-color: #020813;
-    color: #ff3333;
-    border: 1px solid #ff3333;
+    color: #33ff33;
+    border: 1px solid #33ff33;
     padding: 10px 20px;
     font-size: 1rem;
     cursor: pointer;
@@ -60,13 +60,13 @@ button {
 }
 
 button:hover {
-    background-color: #ff3333;
+    background-color: #33ff33;
     color: #020813;
-    box-shadow: 0 0 10px #ff3333;
+    box-shadow: 0 0 10px #33ff33;
 }
 
 #desktop {
-    background-image: radial-gradient(rgba(255, 51, 51, 0.1) 1px, transparent 0);
+    background-image: radial-gradient(rgba(51, 255, 51, 0.1) 1px, transparent 0);
     background-size: 24px 24px;
 }
 
@@ -74,7 +74,7 @@ button:hover {
     width: 100%;
     height: 40px;
     background-color: #0a1931;
-    border-bottom: 2px solid #ff3333;
+    border-bottom: 2px solid #33ff33;
     position: fixed;
     top: 0;
     left: 0;
@@ -96,7 +96,7 @@ button:hover {
     width: 320px;
     min-height: 200px;
     background-color: #020813;
-    border: 2px solid #ff3333;
+    border: 2px solid #33ff33;
     box-shadow: 0 5px 15px rgba(0,0,0,0.5);
     border-radius: 6px;
     display: flex;
@@ -106,7 +106,7 @@ button:hover {
 
 .window-header {
     background-color: #0a1931;
-    border-bottom: 2px solid #ff3333;
+    border-bottom: 2px solid #33ff33;
     padding: 8px 10px;
     display: flex;
     justify-content: space-between;
@@ -137,7 +137,7 @@ textarea {
     width: 100%;
     height: 120px;
     background: transparent;
-    color: #ff3333;
+    color: #33ff33;
     border: none;
     outline: none;
     resize: none;
