@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cyber OS - Gaming Hub</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <div id="boot-screen" class="screen">
+            <div class="boot-card">
+                <h1>🚀 CYBER OS v2.0 - GAMING HUB</h1>
+                <p id="boot-subtitle">Welcome, Space Cadet!</p>
+                <div class="boot-input-row">
+                    <select id="emoji-input">
+                        <option>👤</option>
+                        <option>🚀</option>
+                        <option>🌌</option>
+                        <option>🛸</option>
+                        <option>🌠</option>
+                        <option>💻</option>
+                        <option>🔥</option>
+                        <option>⚡</option>
+                        <option>🎮</option>
+                        <option>👾</option>
+                        <option>🤖</option>
+                        <option>💀</option>
+                        <option>🦾</option>
+                        <option>🔮</option>
+                        <option>⚔️</option>
+                        <option>🐉</option>
+                    </select>
+                    <input type="text" id="username-input" placeholder="Enter your username..." maxlength="20">
+                </div>
+                <div class="boot-input-row" id="password-row" style="margin-top:8px;">
+                    <input type="password" id="password-input" placeholder="Enter your password..." maxlength="30" style="flex:1;">
+                </div>
+                <div id="boot-status" style="margin-top:8px;font-size:0.8rem;color:#ff6666;min-height:1.2em;"></div>
+                <button id="boot-btn">SIGN IN</button>
+            </div>
+    </div>
+
+    <div id="desktop" class="screen hidden">
+        <canvas id="matrix-canvas"></canvas>
+
+        <div id="desktop-icons"></div>
+        <div id="context-menu" class="context-menu hidden"></div>
+        <div id="start-menu" class="start-menu hidden"></div>
+        <div id="alt-tab-overlay" class="hidden"></div>
+
+        <!-- Snap layouts menu -->
+        <div id="snap-layout-menu" class="hidden"></div>
+
+        <!-- Emoji Picker -->
+        <div id="emoji-picker" class="hidden"></div>
+
+        <!-- Toast notifications container -->
+        <div id="toast-container"></div>
+
+        <!-- Calendar flyout -->
+        <div id="calendar-flyout" class="flyout hidden"></div>
+
+        <!-- Action Center -->
+        <div id="action-center" class="flyout hidden"></div>
+
+        <div id="taskbar">
+            <span class="logo profile-logo" id="username-display"></span>
+            <div id="profile-menu" class="profile-menu hidden">
+                <button data-action="lock">🔒 Lock</button>
+                <button data-action="signout">🚪 Sign Out</button>
+                <div class="profile-separator"></div>
+                <button data-action="restart">🔄 Restart</button>
+                <button data-action="shutdown">⏻ Shutdown</button>
+            </div>
+
+            <!-- Search bar -->
+            <div id="taskbar-search">
+                <span>🔍</span>
+                <input type="text" id="search-input" placeholder="Search apps..." maxlength="50">
+                <div id="search-results" class="hidden"></div>
+            </div>
+
+            <div class="taskbar-buttons">
+                <button class="taskbar-btn" data-app="notes">📝</button>
+                <button class="taskbar-btn" data-app="calendar">📅</button>
+                <button class="taskbar-btn" data-app="calc">🧮</button>
+                <button class="taskbar-btn" data-app="todo">✅</button>
+                <button class="taskbar-btn" data-app="ai">🤖</button>
+                <button class="taskbar-btn" data-app="settings">⚙️</button>
+                <span class="taskbar-separator"></span>
+                <button class="taskbar-btn" data-app="gaminghub">🎮</button>
+                <button class="taskbar-btn" data-app="highscores">🏆</button>
+                <button class="taskbar-btn" data-app="wallpapers">🖼</button>
+                <button class="taskbar-btn" data-app="taskmgr">📊</button>
+            </div>
+            <div id="system-tray">
+                <span class="tray-icon" id="tray-nightlight" title="Night Light">🌙</span>
+                <span class="tray-icon" id="tray-network" title="Network Status">📶</span>
+                <span class="tray-icon" id="tray-volume" title="Volume">🔊</span>
+                <span class="tray-icon" id="tray-battery" title="Battery">🔋</span>
+                <span class="tray-icon" id="tray-action-center" title="Action Center">💬</span>
+            </div>
+            <div id="show-desktop"></div>
+            <div id="taskbar-preview"></div>
+            <span id="clock" title="Click for calendar">00:00 AM</span>
+        </div>
+
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
