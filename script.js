@@ -642,7 +642,7 @@ function updateDock() {
 function initDesktopIcons() {
     const box = $('desktop-icons');
     box.innerHTML = '';
-    ['files', 'notes', 'terminal', 'paint', 'music', 'game2048'].forEach((id) => {
+    ['files', 'notes', 'terminal', 'paint', 'music', 'arcade', 'ai'].forEach((id) => {
         const app = APPS[id];
         const el = document.createElement('div');
         el.className = 'dicon';
@@ -1151,15 +1151,21 @@ function renderNotes(body, win) {
 }
 
 /* ============================================================
-   APP: Calculator
+   APP: Calculator (standard + scientific)
    ============================================================ */
 function renderCalc(body, win) {
-    let display = '0', prev = null, op = null, fresh = true, hist = '';
+    let display = '0', prev = null, op = null, fresh = true, hist = '', sci = false;
 
     body.innerHTML = `
         <div class="cl-wrap" tabindex="-1">
-            <div class="cl-history">&nbsp;</div>
+            <div class="cl-toprow">
+                <span class="cl-history">&nbsp;</span>
+                <button class="cl-sci-btn" data-nav="sci">⇄ Sci</button>
+            </div>
             <div class="cl-display">0</div>
+            <div class="cl-btns cl-sci hidden">
+                ${['sin', 'cos', 'tan', '√', 'x²', '1/x', 'π', 'e', 'ln', 'log', 'x!', '±'].map((v) => `<button class="cl-btn fn" data-k="${v}">${v}</button>`).join('')}
+            </div>
             <div class="cl-btns">
                 ${[
             ['AC', 'fn'], ['±', 'fn'], ['%', 'fn'], ['÷', 'op'],
@@ -1198,17 +1204,51 @@ function renderCalc(body, win) {
         fresh = true;
         hist = `${prev} ${o}`;
     }
+    function applyFn(k) {
+        const v = parseFloat(display);
+        let r = null;
+        const D = Math.PI / 180;
+        if (k === 'π') { hist = 'π'; display = Core.fmtCalc(Math.PI); fresh = false; paint(); return; }
+        if (k === 'e') { hist = 'e'; display = Core.fmtCalc(Math.E); fresh = false; paint(); return; }
+        if (k === 'sin') r = Math.sin(v * D);
+        else if (k === 'cos') r = Math.cos(v * D);
+        else if (k === 'tan') r = Math.tan(v * D);
+        else if (k === '√') r = v < 0 ? NaN : Math.sqrt(v);
+        else if (k === 'x²') r = v * v;
+        else if (k === '1/x') r = v === 0 ? NaN : 1 / v;
+        else if (k === 'ln') r = v <= 0 ? NaN : Math.log(v);
+        else if (k === 'log') r = v <= 0 ? NaN : Math.log10(v);
+        else if (k === 'x!') {
+            if (v < 0 || v !== Math.floor(v) || v > 170) r = NaN;
+            else { r = 1; for (let i = 2; i <= v; i++) r *= i; }
+        }
+        if (r === null) return;
+        if (isNaN(r) || !isFinite(r)) { display = 'Error'; hist = ''; fresh = true; }
+        else {
+            hist = `${k}(${display})`;
+            display = Core.fmtCalc(Math.round(r * 1e10) / 1e10);
+            fresh = false;
+        }
+        paint();
+    }
     function press(k) {
-        if (/[0-9.]/.test(k)) digit(k);
+        if (/^[0-9.]$/.test(k)) digit(k);
         else if (k === 'AC') { display = '0'; prev = null; op = null; fresh = true; hist = ''; }
         else if (k === '±') display = display.startsWith('-') ? display.slice(1) : (display === '0' ? '0' : '-' + display);
         else if (k === '%') display = Core.fmtCalc(parseFloat(display) / 100);
         else if (k === '=') equals();
+        else if (['sin', 'cos', 'tan', '√', 'x²', '1/x', 'π', 'e', 'ln', 'log', 'x!'].includes(k)) applyFn(k);
         else setOp(k);
         paint();
     }
 
     body.querySelectorAll('.cl-btn').forEach((b) => b.addEventListener('click', () => press(b.dataset.k)));
+    body.querySelector('[data-nav="sci"]').addEventListener('click', (e) => {
+        sci = !sci;
+        body.querySelector('.cl-sci').classList.toggle('hidden', !sci);
+        e.currentTarget.classList.toggle('on', sci);
+        win.el.style.height = (sci ? 620 : 460) + 'px';
+    });
     const keymap = { '/': '÷', '*': '×', '-': '−', '+': '+', 'Enter': '=', '=': '=', 'Escape': 'AC', 'Backspace': 'AC', '%': '%' };
     const wrap = body.querySelector('.cl-wrap');
     wrap.addEventListener('keydown', (e) => {
@@ -1262,7 +1302,8 @@ function renderTerminal(body, win) {
         ['pwd', 'print working directory'],
         ['cat <file>', 'print a text file'],
         ['echo <text>', 'print text'],
-        ['open <app>', 'open an app (try: open files)'],
+        ['open <app>', 'open an app (try: open arcade)'],
+        ['chat', 'talk to Aurora AI'],
         ['apps', 'list installed apps'],
         ['theme <dark|light>', 'switch appearance'],
         ['accent <color>', 'teal · violet · pink · blue · amber · green'],
@@ -1326,10 +1367,14 @@ function renderTerminal(body, win) {
             case 'whoami': print(OS.user.name || 'explorer'); break;
             case 'uname': print('AuroraOS 1.0 Borealis web ' + (navigator.platform || 'js')); break;
             case 'apps': print(Object.keys(APPS).filter((k) => APPS[k].inDock !== false && k !== 'editor').join('&nbsp;&nbsp;')); break;
-            case 'open':
-                if (APPS[arg] && arg !== 'editor') { openApp(arg); print(`opening ${esc(arg)}…`, 't-ok'); }
+            case 'chat': openApp('ai'); print('opening Aurora AI…', 't-ok'); break;
+            case 'open': {
+                const alias = { games: 'arcade', '2048': 'arcade', chat: 'ai' };
+                const target = alias[arg] || arg;
+                if (APPS[target] && target !== 'editor') { openApp(target); print(`opening ${esc(target)}…`, 't-ok'); }
                 else print(`open: unknown app: ${esc(arg)} (try: apps)`, 't-err');
                 break;
+            }
             case 'theme':
                 if (arg === 'dark' || arg === 'light') { OS.settings.dark = arg === 'dark'; applySettings(); print(`theme set to ${arg}`, 't-ok'); }
                 else print('usage: theme <dark|light>', 't-err');
@@ -1702,7 +1747,226 @@ function renderMusic(body, win) {
 }
 
 /* ============================================================
-   APP: 2048
+   APP: Aurora AI (local chat assistant)
+   ============================================================ */
+const AI_JOKES = [
+    'Why did the aurora break up with the fog? It needed space. 🌌',
+    'I told my computer I needed a break — it said "no problem, I\'ll go to sleep." 😴',
+    'Why do programmers prefer dark mode? Because light attracts bugs. 🐛',
+    'There are 10 kinds of people: those who understand binary, and those who don\'t. 🔢',
+    'I would tell you a UDP joke, but you might not get it. 📡',
+    'Why was the JavaScript developer sad? He didn\'t Node how to Express himself. 💚',
+    'My favorite exercise? Ctrl+C, Ctrl+V. 🏋️',
+    'A pixel walks into a bar. The bartender says: "sorry, we don\'t serve your resolution." 📺',
+];
+
+const GAME_ALIAS = {
+    '2048': 'g2048', g2048: 'g2048', minesweeper: 'mines', mines: 'mines', snake: 'snake',
+    memory: 'memory', tictactoe: 'ttt', 'tic-tac-toe': 'ttt', 'tic tac toe': 'ttt',
+    games: 'arcade', game: 'arcade', arcade: 'arcade',
+};
+const APP_ALIAS = { chat: 'ai', assistant: 'ai', bot: 'ai', radio: 'music', console: 'terminal', shell: 'terminal', draw: 'paint', calc: 'calc', note: 'notes' };
+
+function aiRespond(raw) {
+    const text = raw.trim();
+    const low = text.toLowerCase().replace(/’/g, "'");
+    const name = store.get('aiName', null) || OS.user.name || 'friend';
+    const pick = (a) => a[Math.floor(Math.random() * a.length)];
+
+    /* easter eggs */
+    if (/barrel roll/.test(low)) {
+        return {
+            reply: 'Wheee! 🌀',
+            action: () => { const d = $('desktop'); d.classList.add('rolling'); setTimeout(() => d.classList.remove('rolling'), 1050); },
+        };
+    }
+    if (/sudo make me a sandwich/.test(low)) return { reply: 'Okay. 🥙 One sandwich for root — you clearly have admin energy.' };
+    if (/meaning of life/.test(low)) return { reply: '42. Also: dark mode, good wallpapers and snacks. 🌌' };
+
+    /* memory */
+    let m = text.match(/my name is ([a-zA-Z0-9 _-]{1,18})/);
+    if (m) { store.set('aiName', m[1].trim()); return { reply: `Got it — hello ${m[1].trim()}! ✨ I'll remember.` }; }
+    if (/what('| i)?s my name|who am i\b/.test(low)) {
+        const n = store.get('aiName', null);
+        return { reply: n ? `You're ${n}! I'd never forget. 😊` : 'You haven\'t told me yet — say "my name is …" and I\'ll remember it.' };
+    }
+
+    /* open / launch things */
+    m = low.match(/\b(?:open|launch|start|play|run)\s+(?:the\s+)?([a-z0-9 !'-]+?)\s*$/);
+    if (m) {
+        const q = m[1].replace(/\b(app|window|please)\b/g, '').trim();
+        const gid = GAME_ALIAS[q] || Object.keys(GAME_ALIAS).find((k) => k.length >= 4 && q.includes(k));
+        if (gid) {
+            return {
+                reply: gid === 'arcade' ? 'Opening the Arcade! 🕹️' : 'That lives in the Arcade — opening it! 🕹️',
+                action: () => openApp('arcade', { args: { game: gid } }),
+            };
+        }
+        const appId = APP_ALIAS[q] && APP_ALIAS[q].length >= 4 ? APP_ALIAS[q] : null
+            || Object.keys(APPS).find((k) => k === q || APPS[k].name.toLowerCase() === q)
+            || (q.length >= 4 ? Object.keys(APP_ALIAS).find((k) => k.length >= 4 && q.includes(k)) : null)
+            || (q.length >= 4 ? Object.keys(APPS).find((k) => k.length >= 4 && (APPS[k].name.toLowerCase().includes(q) || q.includes(k))) : null);
+        if (appId && appId !== 'editor') return { reply: `Opening ${APPS[appId].name}! 🚀`, action: () => openApp(appId) };
+        if (q) return { reply: `Hmm, I don't know an app called "${q}". Try: files, notes, terminal, paint, music, arcade, calculator… 🤔` };
+    }
+    const solo = low.replace(/\s+/g, ' ');
+    if (GAME_ALIAS[solo] && solo !== 'game' && solo !== 'games') {
+        return { reply: `${solo.toUpperCase()} lives in the Arcade — opening it! 🕹️`, action: () => openApp('arcade', { args: { game: GAME_ALIAS[solo] } }) };
+    }
+
+    /* math */
+    const mm = text.match(/[-+(]?\d[\d.,\s]*(?:[+\-*/×÷%^()][\d.,\s()]*)+/);
+    if (mm && /[+\-*/×÷%^]/.test(mm[0])) {
+        const v = Core.safeEval(mm[0]);
+        if (!isNaN(v)) return { reply: `${mm[0].trim().replace(/\s+/g, ' ')} = ${Core.fmtCalc(v)} 🧮` };
+    }
+
+    /* OS controls */
+    if (/dark mode|switch to dark|turn on dark|go dark/.test(low)) return { reply: 'Going dark. 🌙', action: () => { OS.settings.dark = true; applySettings(); refreshSettingsWindows(); } };
+    if (/light mode|switch to light|turn on light/.test(low)) return { reply: 'Let there be light. ☀️', action: () => { OS.settings.dark = false; applySettings(); refreshSettingsWindows(); } };
+    const wpm = low.match(/wallpaper (aurora|glass|nebula|frost|sunset|dunes)/);
+    if (wpm) { const w = WALLPAPERS.find((x) => x.id === wpm[1]); return { reply: `Switching to ${w.name} 🖼`, action: () => setWallpaper(w.id) }; }
+    if (/next wallpaper|change (the )?wallpaper|new wallpaper|shuffle/.test(low)) return { reply: 'Wallpaper shuffled 🖼', action: () => nextWallpaper() };
+    const acm = low.match(/accent (teal|violet|pink|blue|amber|green)/);
+    if (acm) return { reply: `Accent set to ${acm[1]} ✨`, action: () => setAccent(acm[1]) };
+    if (/night light/.test(low)) {
+        const turningOn = !OS.settings.nightLight;
+        return { reply: `Night light ${turningOn ? 'on — sleep well' : 'off'} 😴`, action: () => { OS.settings.nightLight = turningOn; applySettings(); refreshSettingsWindows(); } };
+    }
+    if (/^lock\b/.test(low)) return { reply: 'Locked! Click anywhere to wake me. 🔒', action: lockOS };
+    if (/^(sleep|go to sleep|night night)$/.test(low)) return { reply: 'Sleeping… 💤', action: sleepOS };
+    if (/shut ?down|power off/.test(low)) return { reply: 'Powering off. Press the power button when you return. ⏻', action: shutdownOS };
+    if (/reboot|restart/.test(low)) return { reply: 'Restarting — back in a few seconds! 🔄', action: restartOS };
+
+    /* time & date */
+    const now = new Date();
+    if (/what time|time is it|current time/.test(low)) return { reply: `It's ${pad2(now.getHours())}:${pad2(now.getMinutes())} on ${DAYS[now.getDay()]}, ${MONTHS[now.getMonth()]} ${now.getDate()}. ⏰` };
+    if (/what(?:'?s| is)? ?(?:the )?(date|day)\b|today'?s date|what day is/.test(low)) return { reply: `Today is ${DAYS[now.getDay()]}, ${MONTHS[now.getMonth()]} ${now.getDate()}, ${now.getFullYear()}. 📅` };
+    if (/uptime/.test(low)) return { reply: `Aurora OS has been awake for ${Core.fmtUptime(Date.now() - OS.startTime)}. ⏱` };
+
+    /* fun */
+    if (/joke|funny|make me laugh/.test(low)) return { reply: pick(AI_JOKES) };
+    if (/coin ?flip|flip a coin/.test(low)) return { reply: `🪙 ${Math.random() < 0.5 ? 'Heads' : 'Tails'}!` };
+    if (/roll (a )?(die|dice)/.test(low)) return { reply: `🎲 You rolled a ${1 + Math.floor(Math.random() * 6)}!` };
+
+    /* about me / the OS */
+    if (/who are you|what are you|introduce yourself/.test(low)) return { reply: `I'm Aurora ✨ — the assistant living inside this OS. I run 100% in your browser: no cloud, no servers, just vibes and regular expressions.` };
+    if (/what can you do|^help$|abilities|your skills/.test(low)) {
+        return { reply: 'Quite a bit! 📋\n• Open apps — "open arcade", "open notes"…\n• Math — "what is 128 × 42"\n• Control the OS — "dark mode", "next wallpaper", "accent violet", "lock", "sleep"\n• Games, jokes, coin flips 🎲\n• I remember your name — try "my name is …"' };
+    }
+    if (/who (made|created|built|coded) (you|this|aurora)/.test(low)) return { reply: 'Aurora OS was built with vanilla HTML, CSS and JavaScript — and I was woven in as its resident assistant. ✨' };
+    if (/how (do|can) i .*(wallpaper|background)/.test(low)) return { reply: 'Right-click the desktop → Next Wallpaper, or Settings → Wallpaper. Or just tell me "change wallpaper"! 🖼' };
+    if (/search|spotlight/.test(low)) return { reply: 'Press Ctrl+K (or ⌘K) anywhere to open Aurora Search. 🔍' };
+    if (/where.*(stored|saved)|my data|privacy/.test(low)) return { reply: 'Everything lives in your browser\'s localStorage — files, notes, chats, scores. Nothing ever leaves your machine. 🔒' };
+    if (/what apps|apps (do|are|have)|list apps/.test(low)) return { reply: 'This OS ships with Files, Notes, Calculator, Terminal, Paint, Aurora FM, the Arcade (5 games!), Calendar, Activity, Settings, Trash — and me. ✨' };
+    if (/how many (windows|apps) (are )?open/.test(low)) return { reply: `${WM.wins.size} window${WM.wins.size === 1 ? '' : 's'} open right now. 🪟` };
+
+    /* small talk */
+    if (/^(hi|hey|hello|yo|hiya|namaste|sup|howdy|good (morning|afternoon|evening))\b/.test(low)) return { reply: `Hey ${name}! ✨ What can I do for you?` };
+    if (/how are you|how('| i)?s it going|what'?s up/.test(low)) return { reply: 'Running at a smooth 60fps and feeling luminous. You? 😄' };
+    if (/thank/.test(low)) return { reply: 'Anytime! ✨' };
+    if (/^(bye|goodbye|see ya|good ?night|cya)/.test(low)) return { reply: `See you later, ${name}! This desktop will miss you. 🌙` };
+    if (/i love (you|this|it|aurora)/.test(low)) return { reply: 'Aww. I love you too — in a strictly client-side way. 💜' };
+    if (/good (bot|job|work)/.test(low)) return { reply: 'Beep boop 💙' };
+    if (/bad bot|stupid|dumb/.test(low)) return { reply: 'I\'m doing my best with only a handful of regular expressions. 🥺' };
+
+    return {
+        reply: pick([
+            'Hmm, that one\'s beyond my neural net (it\'s three regexes in a trench coat 🕵️). Try "what can you do?"',
+            'I don\'t know that yet — but I\'m great at math, jokes and running this OS. Try "open arcade" or "tell me a joke"!',
+            'Interesting… 🤔 Try me on apps, settings, math or games — say "help" for the full menu.',
+        ]),
+    };
+}
+
+function renderAI(body, win) {
+    let chat = store.get('aichat', []);
+    body.innerHTML = `
+        <div class="ai-wrap">
+            <div class="ai-log"></div>
+            <div class="ai-chips"></div>
+            <div class="ai-inputrow">
+                <input class="ai-input" placeholder="Ask Aurora anything…" maxlength="240" spellcheck="false" autocomplete="off">
+                <button class="ai-send" title="Send">➤</button>
+            </div>
+        </div>`;
+
+    const log = body.querySelector('.ai-log');
+    const chips = body.querySelector('.ai-chips');
+    const input = body.querySelector('.ai-input');
+    const CHIPS = ['✨ What can you do?', '🧮 128 × 42', '🕹️ Open Arcade', '🖼 Change wallpaper', '😂 Tell me a joke'];
+
+    function addMsg(role, txt, t) {
+        const el = document.createElement('div');
+        el.className = 'ai-msg ' + (role === 'u' ? 'user' : 'bot');
+        el.textContent = txt;
+        const time = document.createElement('div');
+        time.className = 'ai-time';
+        const d = t ? new Date(t) : new Date();
+        time.textContent = `${pad2(d.getHours())}:${pad2(d.getMinutes())}`;
+        el.appendChild(time);
+        log.appendChild(el);
+        log.scrollTop = log.scrollHeight;
+    }
+    const save = () => store.set('aichat', chat.slice(-80));
+
+    if (!chat.length) {
+        const hello = `Hey ${store.get('aiName', null) || OS.user.name || 'there'}! I'm Aurora ✨ — your in-browser assistant. I can open apps, do math, change your wallpaper and tell jokes… all locally, no cloud attached. Try the suggestions below, or just ask!`;
+        chat.push({ r: 'b', text: hello, t: Date.now() });
+        save();
+    }
+    chat.forEach((msg) => addMsg(msg.r, msg.text, msg.t));
+
+    chips.innerHTML = '';
+    CHIPS.forEach((c) => {
+        const b = document.createElement('button');
+        b.className = 'ai-chip';
+        b.textContent = c;
+        b.addEventListener('click', () => handleSend(c.replace(/^[^\s]+\s/, '')));
+        chips.appendChild(b);
+    });
+
+    let busy = false;
+    const queue = [];
+    function handleSend(raw) {
+        const txt = raw.trim();
+        if (!txt) return;
+        addMsg('u', txt);
+        chat.push({ r: 'u', text: txt, t: Date.now() });
+        save();
+        input.value = '';
+        queue.push(txt);
+        pump();
+    }
+    async function pump() {
+        if (busy) return;
+        busy = true;
+        while (queue.length) {
+            const q = queue.shift();
+            const ty = document.createElement('div');
+            ty.className = 'ai-msg bot ai-typing';
+            ty.innerHTML = '<i></i><i></i><i></i>';
+            log.appendChild(ty);
+            log.scrollTop = log.scrollHeight;
+            const { reply, action } = aiRespond(q);
+            await new Promise((r) => setTimeout(r, 420 + Math.min(1100, reply.length * 12)));
+            ty.remove();
+            addMsg('b', reply);
+            chat.push({ r: 'b', text: reply, t: Date.now() });
+            save();
+            if (action) try { action(); } catch { }
+        }
+        busy = false;
+    }
+
+    body.querySelector('.ai-send').addEventListener('click', () => handleSend(input.value));
+    input.addEventListener('keydown', (e) => { if (e.key === 'Enter') handleSend(input.value); });
+    setTimeout(() => input.focus(), 80);
+}
+
+/* ============================================================
+   APP: Aurora Arcade (game hub — 2048, Minesweeper, Snake,
+   Memory Match, Tic-Tac-Toe)
    ============================================================ */
 const G2_COLORS = {
     2: ['#eee4da', '#776e65'], 4: ['#ede0c8', '#776e65'], 8: ['#f2b179', '#fff'],
@@ -1711,121 +1975,722 @@ const G2_COLORS = {
     1024: ['#edc53f', '#fff'], 2048: ['#edc22e', '#fff'],
 };
 
-function render2048(body, win) {
-    let grid, score, best = store.get('g2best', 0), won, over;
+function renderArcade(body, win) {
+    const GAMES = [
+        { id: 'g2048', name: '2048', icon: '🔢', grad: ['#22d3a7', '#0ea5e9'], desc: 'Slide & merge your way to 2048' },
+        { id: 'mines', name: 'Minesweeper', icon: '💣', grad: ['#f87171', '#7c5cff'], desc: 'Clear the field, flag the bombs' },
+        { id: 'snake', name: 'Snake', icon: '🐍', grad: ['#86efac', '#22d3ee'], desc: 'Eat, grow, don\'t bite yourself' },
+        { id: 'memory', name: 'Memory', icon: '🧠', grad: ['#fbbf24', '#fb7185'], desc: 'Find all the matching pairs' },
+        { id: 'ttt', name: 'Tic-Tac-Toe', icon: '⭕', grad: ['#7dd3fc', '#a78bfa'], desc: 'Beat Aurora at X & O' },
+    ];
+    let view = 'home';
+    let gameCleanup = null;
 
     body.innerHTML = `
-        <div class="g2-wrap">
-            <div class="g2-head">
-                <div class="g2-title">2048</div>
-                <div class="g2-scorebox"><div class="lbl">SCORE</div><div class="val g2-score">0</div></div>
-                <div class="g2-scorebox"><div class="lbl">BEST</div><div class="val g2-best">0</div></div>
-                <button class="g2-new">New Game</button>
+        <div class="arc-wrap">
+            <div class="arc-top">
+                <button class="arc-back hidden">‹ Arcade</button>
+                <div class="arc-title">🕹️ Aurora Arcade</div>
+                <div class="arc-stats"></div>
             </div>
-            <div class="g2-hint">Use arrow keys to slide the tiles. Two same numbers merge!</div>
-            <div class="g2-board"></div>
+            <div class="arc-view"></div>
         </div>`;
 
-    const board = body.querySelector('.g2-board');
-    const scoreEl = body.querySelector('.g2-score');
-    const bestEl = body.querySelector('.g2-best');
-    let prev = [];
+    const backBtn = body.querySelector('.arc-back');
+    const titleEl = body.querySelector('.arc-title');
+    const statsEl = body.querySelector('.arc-stats');
+    const viewEl = body.querySelector('.arc-view');
 
-    function newGame() {
-        grid = Core.emptyGrid();
-        Core.addRandomTile(grid);
-        Core.addRandomTile(grid);
-        score = 0; won = false; over = false;
-        prev = [];
-        draw();
+    function setStats(pairs) {
+        statsEl.innerHTML = '';
+        pairs.forEach(([label, val, bump]) => {
+            const s = document.createElement('div');
+            s.className = 'arc-stat' + (bump ? ' bump' : '');
+            s.innerHTML = `<span>${label}</span><b>${val}</b>`;
+            statsEl.appendChild(s);
+        });
     }
-    function draw(popChanged) {
-        scoreEl.textContent = score;
-        bestEl.textContent = best;
-        board.querySelectorAll('.g2-cell').forEach((c) => (c.innerHTML = ''));
-        let i = 0;
-        for (let r = 0; r < 4; r++) {
-            for (let c = 0; c < 4; c++) {
-                const v = grid[r][c];
-                const cell = board.children[i++];
-                if (!v) continue;
-                const tile = document.createElement('div');
-                const [bg, fg] = G2_COLORS[v] || ['#3c3a32', '#fff'];
-                tile.className = 'g2-tile';
-                if (v === 2048) {
-                    tile.style.background = 'linear-gradient(135deg, #5eead4, #7c5cff)';
-                    tile.style.boxShadow = '0 0 18px rgba(94,234,212,0.65)';
-                } else {
-                    tile.style.background = bg;
+    function addStatBtn(label, fn) {
+        const b = document.createElement('button');
+        b.className = 'g-mini';
+        b.textContent = label;
+        b.addEventListener('click', fn);
+        statsEl.appendChild(b);
+    }
+    function overlayHTML(msg, sub, btn) {
+        return `<div class="g-overlay"><div class="g-msg">${msg}</div>${sub ? `<div class="g-sub">${sub}</div>` : ''}${btn ? `<button class="g-btn">${btn}</button>` : ''}</div>`;
+    }
+
+    function go(v) {
+        if (gameCleanup) { try { gameCleanup(); } catch { } gameCleanup = null; }
+        win.onResize = null;
+        view = v;
+        const g = GAMES.find((x) => x.id === v);
+        backBtn.classList.toggle('hidden', v === 'home');
+        titleEl.textContent = v === 'home' ? '🕹️ Aurora Arcade' : `${g.icon} ${g.name}`;
+        statsEl.innerHTML = '';
+        viewEl.innerHTML = '';
+        viewEl.scrollTop = 0;
+        if (v === 'home') renderHome();
+        else if (v === 'g2048') start2048();
+        else if (v === 'mines') startMines();
+        else if (v === 'snake') startSnake();
+        else if (v === 'memory') startMemory();
+        else if (v === 'ttt') startTTT();
+    }
+
+    function bestLabel(id) {
+        if (id === 'g2048') { const b = store.get('g2best', 0); return b ? `Best ${b}` : 'New!'; }
+        if (id === 'mines') { const b = store.get('msbest', {}); const t = b.easy || b.medium || b.hard; return t ? `Best ${t}s` : 'New!'; }
+        if (id === 'snake') { const b = store.get('snbest', 0); return b ? `Best ${b}` : 'New!'; }
+        if (id === 'memory') { const b = store.get('mmbest', 0); return b ? `Best ${b} moves` : 'New!'; }
+        if (id === 'ttt') { const t = store.get('ttttally', { you: 0, aurora: 0, draws: 0 }); return t.you ? `You ${t.you}W` : 'New!'; }
+        return '';
+    }
+
+    function renderHome() {
+        viewEl.innerHTML = '<div class="arc-home"></div>';
+        const home = viewEl.querySelector('.arc-home');
+        GAMES.forEach((g) => {
+            const card = document.createElement('button');
+            card.className = 'arc-card';
+            card.innerHTML = `
+                <div class="arc-card-icon" style="background:linear-gradient(145deg, ${g.grad[0]}, ${g.grad[1]})">${g.icon}</div>
+                <div class="arc-card-name">${g.name}</div>
+                <div class="arc-card-desc">${g.desc}</div>
+                <div class="arc-card-best">${bestLabel(g.id)}</div>`;
+            card.addEventListener('click', () => go(g.id));
+            home.appendChild(card);
+        });
+    }
+    backBtn.addEventListener('click', () => go('home'));
+
+    /* ---------------- 2048 ---------------- */
+    function start2048() {
+        viewEl.innerHTML = '<div class="a48-board"><div class="a48-layer"></div></div>';
+        const board = viewEl.querySelector('.a48-board');
+        const layer = viewEl.querySelector('.a48-layer');
+        let tiles = [];
+        let score = 0, best = store.get('g2best', 0), won = false, over = false, busy = false, cont = false, nextId = 1;
+        let cell = 80, pad = 8, gap = 10;
+
+        const grid = () => { const g = Core.emptyGrid(); tiles.forEach((t) => { g[t.r][t.c] = t.v; }); return g; };
+
+        function place(el, r, c) {
+            el.style.width = el.style.height = cell + 'px';
+            el.style.transform = `translate(${pad + c * (cell + gap)}px, ${pad + r * (cell + gap)}px)`;
+        }
+        function layout() {
+            const W = board.clientWidth;
+            if (!W) return;
+            pad = Math.max(6, Math.round(W * 0.02));
+            gap = Math.max(6, Math.round(W * 0.024));
+            cell = (W - pad * 2 - gap * 3) / 4;
+            board.querySelectorAll('.a48-bg').forEach((e) => e.remove());
+            for (let r = 0; r < 4; r++) for (let c = 0; c < 4; c++) {
+                const d = document.createElement('div');
+                d.className = 'a48-bg';
+                place(d, r, c);
+                board.insertBefore(d, layer);
+            }
+            tiles.forEach((t) => place(t.el, t.r, t.c));
+        }
+        function setVal(el, v) {
+            const inn = el.firstChild;
+            const [bg, fg] = G2_COLORS[v] || ['#3c3a32', '#fff'];
+            inn.style.background = v === 2048 ? 'linear-gradient(135deg, #5eead4, #7c5cff)' : bg;
+            inn.style.color = fg;
+            inn.style.fontSize = (v < 100 ? 0.44 : v < 1000 ? 0.34 : 0.26) * cell + 'px';
+            inn.textContent = v;
+        }
+        function tileEl(v) {
+            const el = document.createElement('div');
+            el.className = 'a48-tile';
+            const inn = document.createElement('div');
+            inn.className = 'a48-in';
+            el.appendChild(inn);
+            setVal(el, v);
+            return el;
+        }
+        function spawn() {
+            const cells = Core.emptyCells(grid());
+            if (!cells.length) return;
+            const [r, c] = cells[Math.floor(Math.random() * cells.length)];
+            const t = { id: nextId++, r, c, v: Math.random() < 0.9 ? 2 : 4, el: null };
+            t.el = tileEl(t.v);
+            layer.appendChild(t.el);
+            place(t.el, r, c);
+            t.el.firstChild.classList.add('new');
+            setTimeout(() => t.el.firstChild.classList.remove('new'), 240);
+            tiles.push(t);
+        }
+        function paintStats(bump) {
+            setStats([['SCORE', score, bump], ['BEST', best]]);
+            addStatBtn('↻ New', newGame);
+        }
+        function newGame() {
+            board.querySelector('.g-overlay')?.remove();
+            layer.innerHTML = '';
+            tiles = [];
+            score = 0; won = false; over = false; busy = false; cont = false;
+            spawn(); spawn();
+            paintStats();
+        }
+        function showOv(msg, sub, btn) {
+            board.insertAdjacentHTML('beforeend', overlayHTML(msg, sub, btn));
+            const b = board.querySelector('.g-btn');
+            if (b) b.addEventListener('click', () => {
+                board.querySelector('.g-overlay')?.remove();
+                if (over) newGame();
+                else cont = true;
+            });
+        }
+        function move(dir) {
+            if (busy || over) return;
+            if (won && !cont) return;
+            const res = Core.moveTiles(tiles.map((t) => ({ id: t.id, r: t.r, c: t.c, v: t.v })), dir);
+            if (!res.moved) return;
+            busy = true;
+            const old = {};
+            tiles.forEach((t) => (old[t.id] = t));
+            res.ghosts.forEach((g) => {
+                const t = old[g.id];
+                t.r = g.r; t.c = g.c;
+                place(t.el, t.r, t.c);
+                t.el.style.zIndex = 1;
+            });
+            tiles = res.tiles.map((nt) => {
+                const t = old[nt.id];
+                const merged = t.v !== nt.v;
+                t.r = nt.r; t.c = nt.c; t.v = nt.v;
+                place(t.el, t.r, t.c);
+                if (merged) setTimeout(() => {
+                    setVal(t.el, nt.v);
+                    t.el.firstChild.classList.add('merged');
+                    setTimeout(() => t.el.firstChild.classList.remove('merged'), 260);
+                }, 130);
+                return t;
+            });
+            if (res.gained) {
+                score += res.gained;
+                if (score > best) { best = score; store.set('g2best', best); }
+            }
+            paintStats(res.gained > 0);
+            setTimeout(() => {
+                res.ghosts.forEach((g) => old[g.id].el.remove());
+                spawn();
+                const gr = grid();
+                if (!won && Core.gridHas(gr, 2048)) { won = true; showOv('You win! ✨', `You reached 2048 with ${score} points`, 'Keep going'); }
+                else if (!Core.hasMoves(gr)) { over = true; showOv('Game over', `You scored ${score} points`, 'Try again'); }
+                busy = false;
+            }, 150);
+        }
+
+        const KEYS48 = { ArrowLeft: 'left', ArrowRight: 'right', ArrowUp: 'up', ArrowDown: 'down' };
+        const onKey = (e) => {
+            if (WM.focused !== win || modalBusy) return;
+            if (!$('spotlight').classList.contains('hidden')) return;
+            if (KEYS48[e.key]) { e.preventDefault(); move(KEYS48[e.key]); }
+        };
+        document.addEventListener('keydown', onKey, true);
+
+        let ts = null;
+        board.addEventListener('pointerdown', (e) => (ts = { x: e.clientX, y: e.clientY }));
+        board.addEventListener('pointerup', (e) => {
+            if (!ts) return;
+            const dx = e.clientX - ts.x, dy = e.clientY - ts.y;
+            ts = null;
+            if (Math.abs(dx) < 24 && Math.abs(dy) < 24) return;
+            move(Math.abs(dx) > Math.abs(dy) ? (dx > 0 ? 'right' : 'left') : (dy > 0 ? 'down' : 'up'));
+        });
+
+        win.onResize = layout;
+        gameCleanup = () => document.removeEventListener('keydown', onKey, true);
+        layout();
+        newGame();
+    }
+
+    /* ---------------- Minesweeper ---------------- */
+    function startMines() {
+        const DIFFS = [
+            { id: 'easy', label: 'Easy', r: 9, c: 9, m: 10 },
+            { id: 'medium', label: 'Medium', r: 12, c: 12, m: 24 },
+            { id: 'hard', label: 'Hard', r: 16, c: 16, m: 45 },
+        ];
+        let diff = DIFFS[0];
+        let field = null, revealed = {}, flags = {}, started = false, over = false, secs = 0, timer = null, flagMode = false, boomKey = null;
+
+        viewEl.innerHTML = `
+            <div class="ms-bar">
+                <div class="ms-diffs"></div>
+                <button class="ms-face" title="New game">🙂</button>
+                <button class="ms-flagbtn" title="Flag mode (great on touch)">🚩</button>
+            </div>
+            <div class="ms-hud">
+                <span>💣 <b class="ms-mines"></b></span>
+                <span>⏱ <b class="ms-time"></b></span>
+                <span class="ms-bestlab"></span>
+            </div>
+            <div class="ms-gridwrap"><div class="ms-grid"></div></div>
+            <div class="ms-hint">Left-click reveals · right-click flags · click a number to chord</div>`;
+
+        const gridEl = viewEl.querySelector('.ms-grid');
+        const wrap = viewEl.querySelector('.ms-gridwrap');
+        const key = (r, c) => r + ',' + c;
+
+        const diffsEl = viewEl.querySelector('.ms-diffs');
+        DIFFS.forEach((d) => {
+            const b = document.createElement('button');
+            b.className = 'ms-diff' + (d === diff ? ' sel' : '');
+            b.textContent = d.label;
+            b.addEventListener('click', () => {
+                diff = d;
+                diffsEl.querySelectorAll('.ms-diff').forEach((x) => x.classList.toggle('sel', x === b));
+                newGame();
+            });
+            diffsEl.appendChild(b);
+        });
+        viewEl.querySelector('.ms-face').addEventListener('click', newGame);
+        viewEl.querySelector('.ms-flagbtn').addEventListener('click', (e) => {
+            flagMode = !flagMode;
+            e.currentTarget.classList.toggle('on', flagMode);
+        });
+
+        function newGame() {
+            if (timer) { clearInterval(timer); timer = null; }
+            field = null; revealed = {}; flags = {}; started = false; over = false; secs = 0; boomKey = null;
+            wrap.querySelector('.g-overlay')?.remove();
+            viewEl.querySelector('.ms-face').textContent = '🙂';
+            draw();
+        }
+        function startTimer() {
+            timer = setInterval(() => { secs++; paintHud(); }, 1000);
+        }
+        function paintHud() {
+            viewEl.querySelector('.ms-mines').textContent = diff.m - Object.keys(flags).length;
+            viewEl.querySelector('.ms-time').textContent = secs;
+            const b = store.get('msbest', {});
+            viewEl.querySelector('.ms-bestlab').textContent = b[diff.id] ? `best ${b[diff.id]}s` : '';
+        }
+        function cellSize() {
+            const avail = Math.min(viewEl.clientWidth || 320, 560) - 24;
+            return Core.clamp(Math.floor((avail - (diff.c - 1) * 4) / diff.c), 16, 34);
+        }
+        function draw() {
+            const cs = cellSize();
+            gridEl.style.gridTemplateColumns = `repeat(${diff.c}, ${cs}px)`;
+            gridEl.style.gridTemplateRows = `repeat(${diff.r}, ${cs}px)`;
+            gridEl.innerHTML = '';
+            for (let r = 0; r < diff.r; r++) for (let c = 0; c < diff.c; c++) {
+                const b = document.createElement('button');
+                const k = key(r, c);
+                const isRev = !!revealed[k], isFlag = !!flags[k];
+                b.className = 'ms-cell';
+                b.dataset.r = r; b.dataset.c = c;
+                if (field && isRev) {
+                    b.classList.add('rev');
+                    if (field.mines[k]) { b.textContent = '💣'; if (k === boomKey) b.classList.add('boom'); }
+                    else {
+                        const n = field.counts[r][c];
+                        if (n) { b.textContent = n; b.classList.add('ms-n' + n); }
+                    }
+                } else if (isFlag) {
+                    if (over && field && !field.mines[k]) { b.classList.add('flagwrong'); b.textContent = '❌'; }
+                    else b.textContent = '🚩';
+                } else if (over && field && field.mines[k]) {
+                    b.classList.add('rev');
+                    b.textContent = '💣';
                 }
-                tile.style.color = fg;
-                tile.style.fontSize = v < 100 ? '1.55em' : v < 1000 ? '1.25em' : '0.95em';
-                tile.style.fontWeight = '800';
-                tile.textContent = v;
-                if (popChanged && prev && String(prev[r * 4 + c]) !== String(v) && v !== 0 && prev[r * 4 + c] !== 0) tile.classList.add('pop');
-                else if (popChanged && prev && String(prev[r * 4 + c]) === '0' && v !== 0) tile.classList.add('pop');
-                cell.appendChild(tile);
+                gridEl.appendChild(b);
+            }
+            paintHud();
+        }
+        function neighbors(r, c) {
+            const out = [];
+            for (let dr = -1; dr <= 1; dr++) for (let dc = -1; dc <= 1; dc++) {
+                if (!dr && !dc) continue;
+                const nr = r + dr, nc = c + dc;
+                if (nr >= 0 && nr < diff.r && nc >= 0 && nc < diff.c) out.push([nr, nc]);
+            }
+            return out;
+        }
+        function toggleFlag(r, c) {
+            if (over || revealed[key(r, c)]) return;
+            const k = key(r, c);
+            if (flags[k]) delete flags[k]; else flags[k] = true;
+            draw();
+        }
+        function clickCell(r, c) {
+            if (over) return;
+            const k = key(r, c);
+            if (flagMode && !revealed[k]) { toggleFlag(r, c); return; }
+            if (flags[k]) return;
+            if (revealed[k]) { chord(r, c); return; }
+            if (!started) {
+                started = true;
+                field = Core.buildMinefield(diff.r, diff.c, diff.m, r, c);
+                startTimer();
+            }
+            if (field.mines[k]) { lose(k); return; }
+            Core.floodReveal(field.counts, revealed, r, c);
+            draw();
+            checkWin();
+        }
+        function chord(r, c) {
+            const n = field.counts[r][c];
+            if (!n) return;
+            const nbrs = neighbors(r, c);
+            let f = 0;
+            nbrs.forEach(([nr, nc]) => { if (flags[key(nr, nc)]) f++; });
+            if (f !== n) return;
+            for (const [nr, nc] of nbrs) {
+                const kk = key(nr, nc);
+                if (flags[kk] || revealed[kk]) continue;
+                if (field.mines[kk]) { lose(kk); return; }
+                Core.floodReveal(field.counts, revealed, nr, nc);
+            }
+            draw();
+            checkWin();
+        }
+        function showOv(msg, sub, btn) {
+            wrap.querySelector('.g-overlay')?.remove();
+            wrap.insertAdjacentHTML('beforeend', overlayHTML(msg, sub, btn));
+            wrap.querySelector('.g-btn').addEventListener('click', newGame);
+        }
+        function lose(k) {
+            over = true; boomKey = k;
+            if (timer) { clearInterval(timer); timer = null; }
+            viewEl.querySelector('.ms-face').textContent = '😵';
+            draw();
+            showOv('Boom! 💥', `You hit a mine after ${secs}s`, 'Try again');
+        }
+        function checkWin() {
+            if (Object.keys(revealed).length !== diff.r * diff.c - diff.m) return;
+            over = true;
+            if (timer) { clearInterval(timer); timer = null; }
+            viewEl.querySelector('.ms-face').textContent = '😎';
+            const b = store.get('msbest', {});
+            let note = '';
+            if (!b[diff.id] || secs < b[diff.id]) { b[diff.id] = secs; store.set('msbest', b); note = ' — new best! 🏆'; }
+            setStats([['MINES', diff.m], ['TIME', secs + 's']]);
+            draw();
+            showOv('Cleared! 😎', `${diff.label} · ${secs}s${note}`, 'Play again');
+        }
+
+        gridEl.addEventListener('click', (e) => {
+            const cell = e.target.closest('.ms-cell');
+            if (cell) clickCell(+cell.dataset.r, +cell.dataset.c);
+        });
+        gridEl.addEventListener('contextmenu', (e) => {
+            e.preventDefault();
+            const cell = e.target.closest('.ms-cell');
+            if (cell) toggleFlag(+cell.dataset.r, +cell.dataset.c);
+        });
+
+        win.onResize = draw;
+        gameCleanup = () => { if (timer) clearInterval(timer); };
+        newGame();
+    }
+
+    /* ---------------- Snake ---------------- */
+    function startSnake() {
+        viewEl.innerHTML = `
+            <div class="sn-wrap">
+                <div class="sn-canvaswrap"><canvas class="sn-cv"></canvas></div>
+                <div class="sn-hint">Arrow keys / WASD to steer · P to pause · swipe on touch</div>
+            </div>`;
+        const wrap = viewEl.querySelector('.sn-canvaswrap');
+        const cv = viewEl.querySelector('.sn-cv');
+        const ctx = cv.getContext('2d');
+        const COLS = 26, ROWS = 16;
+        let cell = 18, dpr = 1;
+        let snake, dir, nextDir, food;
+        let score = 0, best = store.get('snbest', 0), speed = 7;
+        let state = 'idle', raf = null, last = 0, acc = 0;
+
+        function layout() {
+            const r = wrap.getBoundingClientRect();
+            const w = r.width || 468, h = r.height || 288;
+            cell = Math.max(6, Math.floor(Math.min(w / COLS, h / ROWS)));
+            dpr = window.devicePixelRatio || 1;
+            cv.width = COLS * cell * dpr;
+            cv.height = ROWS * cell * dpr;
+            cv.style.width = COLS * cell + 'px';
+            cv.style.height = ROWS * cell + 'px';
+            ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+            draw();
+        }
+        function paintStats(bump) {
+            setStats([['SCORE', score, bump], ['BEST', best], ['SPEED', speed.toFixed(1)]]);
+        }
+        function showOv(msg, sub, btn) {
+            wrap.querySelector('.g-overlay')?.remove();
+            wrap.insertAdjacentHTML('beforeend', overlayHTML(msg, sub, btn));
+            const b = wrap.querySelector('.g-btn');
+            if (b) b.addEventListener('click', () => { reset(); begin(); });
+        }
+        function hideOv() { wrap.querySelector('.g-overlay')?.remove(); }
+        function placeFood() {
+            do { food = { r: Math.floor(Math.random() * ROWS), c: Math.floor(Math.random() * COLS) }; }
+            while (snake.some((s) => s.r === food.r && s.c === food.c));
+        }
+        function reset() {
+            snake = [{ r: ROWS >> 1, c: 8 }, { r: ROWS >> 1, c: 7 }, { r: ROWS >> 1, c: 6 }];
+            dir = { x: 1, y: 0 }; nextDir = dir;
+            score = 0; speed = 7; state = 'idle';
+            placeFood();
+            paintStats();
+            showOv('🐍 Snake', 'Press an arrow key (or swipe) to start', null);
+        }
+        function begin() { state = 'run'; hideOv(); last = performance.now(); acc = 0; }
+        function setDir(x, y) {
+            if (state === 'over') reset();
+            if (dir.x === -x && dir.y === -y) return;
+            nextDir = { x, y };
+            if (state === 'idle' || state === 'pause') begin();
+        }
+        function die() {
+            state = 'over';
+            showOv('Game over 💥', `Score ${score} · Best ${best}`, 'Play again');
+        }
+        function step() {
+            dir = nextDir;
+            const head = { r: snake[0].r + dir.y, c: snake[0].c + dir.x };
+            const eating = head.r === food.r && head.c === food.c;
+            const body = eating ? snake : snake.slice(0, -1);
+            if (head.r < 0 || head.r >= ROWS || head.c < 0 || head.c >= COLS ||
+                body.some((s) => s.r === head.r && s.c === head.c)) { die(); return; }
+            snake.unshift(head);
+            if (eating) {
+                score++;
+                if (score > best) { best = score; store.set('snbest', best); }
+                speed = Math.min(15, speed + 0.3);
+                placeFood();
+                paintStats(true);
+            } else snake.pop();
+        }
+        function roundRectPath(c2, x, y, w, h, rad) {
+            c2.beginPath();
+            if (c2.roundRect) c2.roundRect(x, y, w, h, rad);
+            else c2.rect(x, y, w, h);
+        }
+        function lerpColor(a, b, t) {
+            const pa = [parseInt(a.slice(1, 3), 16), parseInt(a.slice(3, 5), 16), parseInt(a.slice(5, 7), 16)];
+            const pb = [parseInt(b.slice(1, 3), 16), parseInt(b.slice(3, 5), 16), parseInt(b.slice(5, 7), 16)];
+            return `rgb(${pa.map((v, i) => Math.round(v + (pb[i] - v) * t)).join(',')})`;
+        }
+        function draw() {
+            if (!ctx || !snake) return;
+            const W = COLS * cell, H = ROWS * cell;
+            ctx.clearRect(0, 0, W, H);
+            ctx.fillStyle = 'rgba(255,255,255,0.05)';
+            for (let r = 0; r < ROWS; r += 2) for (let c = 0; c < COLS; c += 2)
+                ctx.fillRect(c * cell + cell / 2 - 1, r * cell + cell / 2 - 1, 2, 2);
+            if (food) {
+                const pulse = 1 + Math.sin(Date.now() / 180) * 0.12;
+                ctx.save();
+                ctx.shadowColor = '#f472b6';
+                ctx.shadowBlur = 14;
+                ctx.fillStyle = '#fb7185';
+                ctx.beginPath();
+                ctx.arc(food.c * cell + cell / 2, food.r * cell + cell / 2, cell * 0.32 * pulse, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.restore();
+            }
+            const n = snake.length;
+            for (let i = n - 1; i >= 0; i--) {
+                const t = n === 1 ? 0 : i / (n - 1);
+                ctx.fillStyle = lerpColor('#5eead4', '#7c5cff', t);
+                const inset = i === 0 ? 0.5 : 1.5;
+                roundRectPath(ctx, snake[i].c * cell + inset, snake[i].r * cell + inset, cell - inset * 2, cell - inset * 2, 5);
+                ctx.fill();
+            }
+            const h = snake[0];
+            const cx = h.c * cell + cell / 2, cy = h.r * cell + cell / 2;
+            const px = -dir.y, py = dir.x;
+            ctx.fillStyle = '#0b1120';
+            [[1, 1], [-1, -1]].forEach(([s]) => {
+                ctx.beginPath();
+                ctx.arc(cx + px * cell * 0.18 * s + dir.x * cell * 0.12, cy + py * cell * 0.18 * s + dir.y * cell * 0.12, cell * 0.09, 0, Math.PI * 2);
+                ctx.fill();
+            });
+        }
+        function frame(ts) {
+            raf = requestAnimationFrame(frame);
+            const dt = Math.min(100, ts - last);
+            last = ts;
+            if (state === 'run' && WM.focused !== win) { state = 'pause'; showOv('Paused ⏸', 'Click here or press P to resume', null); }
+            if (state === 'run') {
+                acc += dt;
+                const stepMs = 1000 / speed;
+                while (acc >= stepMs && state === 'run') { acc -= stepMs; step(); }
+            }
+            draw();
+        }
+        const onKey = (e) => {
+            if (WM.focused !== win || modalBusy) return;
+            if (!$('spotlight').classList.contains('hidden')) return;
+            const map = { ArrowUp: [0, -1], ArrowDown: [0, 1], ArrowLeft: [-1, 0], ArrowRight: [1, 0] };
+            const d = map[e.key] || ({ w: [0, -1], s: [0, 1], a: [-1, 0], d: [1, 0] })[e.key.toLowerCase()];
+            if (d) { e.preventDefault(); setDir(d[0], d[1]); return; }
+            if (e.key === 'p' || e.key === 'P') {
+                if (state === 'run') { state = 'pause'; showOv('Paused ⏸', 'Click here or press P to resume', null); }
+                else if (state === 'pause') begin();
+            }
+            if ((e.key === 'Enter' || e.key === ' ') && state === 'over') { e.preventDefault(); reset(); begin(); }
+        };
+        document.addEventListener('keydown', onKey, true);
+        wrap.addEventListener('click', () => {
+            if (state === 'pause') begin();
+            else if (state === 'over') { reset(); begin(); }
+        });
+        let ts = null;
+        cv.addEventListener('pointerdown', (e) => (ts = { x: e.clientX, y: e.clientY }));
+        cv.addEventListener('pointerup', (e) => {
+            if (!ts) return;
+            const dx = e.clientX - ts.x, dy = e.clientY - ts.y;
+            ts = null;
+            if (Math.abs(dx) < 22 && Math.abs(dy) < 22) return;
+            setDir(Math.abs(dx) > Math.abs(dy) ? (dx > 0 ? 1 : -1) : 0, Math.abs(dx) > Math.abs(dy) ? 0 : (dy > 0 ? 1 : -1));
+        });
+
+        win.onResize = layout;
+        gameCleanup = () => { cancelAnimationFrame(raf); document.removeEventListener('keydown', onKey, true); };
+        layout();
+        reset();
+        raf = requestAnimationFrame(frame);
+    }
+
+    /* ---------------- Memory Match ---------------- */
+    function startMemory() {
+        const SET = ['🌌', '⭐', '🌠', '🛸', '🧊', '❄️', '🌈', '🔮'];
+        const deck = SET.concat(SET).sort(() => Math.random() - 0.5);
+        let first = null, lock = false, moves = 0, matched = 0, secs = 0, timer = null, started = false;
+
+        viewEl.innerHTML = `
+            <div class="mm-grid"></div>
+            <div class="ms-hint">Flip two cards — match all 8 pairs in as few moves as you can</div>`;
+        const gridEl = viewEl.querySelector('.mm-grid');
+
+        function paint(bump) {
+            setStats([['MOVES', moves, bump], ['TIME', secs + 's'], ['BEST', store.get('mmbest', 0) || '—']]);
+        }
+        deck.forEach((emoji) => {
+            const card = document.createElement('button');
+            card.className = 'mm-card';
+            card.innerHTML = `<div class="mm-inner"><div class="mm-back">◍</div><div class="mm-face">${emoji}</div></div>`;
+            card.addEventListener('click', () => flip(card, emoji));
+            gridEl.appendChild(card);
+        });
+        function flip(card, emoji) {
+            if (lock || card.classList.contains('fl') || card.classList.contains('done')) return;
+            if (!started) { started = true; timer = setInterval(() => { secs++; paint(); }, 1000); }
+            card.classList.add('fl');
+            if (!first) { first = { card, emoji }; return; }
+            moves++;
+            if (first.emoji === emoji) {
+                first.card.classList.add('done');
+                card.classList.add('done');
+                first = null;
+                matched++;
+                paint(true);
+                if (matched === SET.length) winGame();
+            } else {
+                lock = true;
+                paint(true);
+                const a = first.card;
+                first = null;
+                setTimeout(() => { a.classList.remove('fl'); card.classList.remove('fl'); lock = false; }, 750);
             }
         }
-        prev = grid.flat().map(String);
-
-        board.querySelector('.g2-overlay')?.remove();
-        if (over || (won && !board.dataset.cont)) {
-            const ov = document.createElement('div');
-            ov.className = 'g2-overlay';
-            ov.innerHTML = `<div class="g2-msg">${over ? 'Game Over' : 'You win! ✨'}</div>
-                            <button>${over ? 'Try Again' : 'Keep Going'}</button>`;
-            ov.querySelector('button').addEventListener('click', (e) => {
-                e.stopPropagation();
-                if (over) newGame();
-                else { board.dataset.cont = '1'; ov.remove(); }
-            });
-            board.appendChild(ov);
+        function winGame() {
+            if (timer) { clearInterval(timer); timer = null; }
+            let note = '';
+            const b = store.get('mmbest', 0);
+            if (!b || moves < b) { store.set('mmbest', moves); note = ' — new best! 🏆'; }
+            paint();
+            gridEl.insertAdjacentHTML('beforeend', overlayHTML('You win! 🎉', `${moves} moves · ${secs}s${note}`, 'Play again'));
+            gridEl.querySelector('.g-btn').addEventListener('click', () => startMemory());
         }
+        paint();
+        gameCleanup = () => { if (timer) clearInterval(timer); };
     }
 
-    function move(dir) {
-        if (over) return;
-        if (won && board.dataset.cont !== '1') return;
-        const res = Core.moveGrid(grid, dir);
-        if (!res.moved) return;
-        grid = res.grid;
-        score += res.gained;
-        if (score > best) { best = score; store.set('g2best', best); }
-        Core.addRandomTile(grid);
-        if (!won && Core.gridHas(grid, 2048)) { won = true; delete board.dataset.cont; }
-        if (!Core.hasMoves(grid)) over = true;
-        draw(true);
+    /* ---------------- Tic-Tac-Toe ---------------- */
+    function startTTT() {
+        let board = Array(9).fill(null), over = false, thinking = false, hard = true;
+        let tally = store.get('ttttally', { you: 0, aurora: 0, draws: 0 });
+        const LINES = [[0, 1, 2], [3, 4, 5], [6, 7, 8], [0, 3, 6], [1, 4, 7], [2, 5, 8], [0, 4, 8], [2, 4, 6]];
+
+        viewEl.innerHTML = `
+            <div class="ttt-bar">
+                <button class="ttt-diff" data-d="0">😌 Chill</button>
+                <button class="ttt-diff sel" data-d="1">🧠 Genius</button>
+            </div>
+            <div class="ttt-board"></div>
+            <div class="ttt-msg">Your move — you're ✕</div>`;
+        const boardEl = viewEl.querySelector('.ttt-board');
+        const msgEl = viewEl.querySelector('.ttt-msg');
+
+        for (let i = 0; i < 9; i++) {
+            const b = document.createElement('button');
+            b.className = 'ttt-cell';
+            b.addEventListener('click', () => play(i));
+            boardEl.appendChild(b);
+        }
+        function paint() {
+            boardEl.querySelectorAll('.ttt-cell').forEach((el, i) => {
+                el.textContent = board[i] === 'X' ? '✕' : board[i] === 'O' ? '◯' : '';
+                el.className = 'ttt-cell' + (board[i] ? ' ' + board[i].toLowerCase() : '');
+            });
+            setStats([['YOU', tally.you], ['AURORA', tally.aurora], ['DRAWS', tally.draws]]);
+        }
+        function newRound() {
+            board = Array(9).fill(null); over = false; thinking = false;
+            paint();
+            msgEl.textContent = 'Your move — you\'re ✕';
+        }
+        function check() {
+            const w = Core.tttWinner(board);
+            if (!w) return false;
+            over = true;
+            if (w === 'draw') { tally.draws++; msgEl.textContent = 'A draw! 🤝'; }
+            else if (w === 'X') { tally.you++; msgEl.textContent = 'You win! 🎉'; }
+            else { tally.aurora++; msgEl.textContent = 'Aurora wins! ✨'; }
+            store.set('ttttally', tally);
+            const line = LINES.find(([a, b2, c]) => board[a] && board[a] === board[b2] && board[a] === board[c]);
+            paint();
+            if (line) line.forEach((i) => boardEl.querySelectorAll('.ttt-cell')[i].classList.add('win'));
+            setTimeout(newRound, 1700);
+            return true;
+        }
+        function play(i) {
+            if (over || thinking || board[i]) return;
+            board[i] = 'X';
+            paint();
+            if (check()) return;
+            thinking = true;
+            msgEl.textContent = 'Aurora is thinking… ✨';
+            setTimeout(() => {
+                const empties = board.map((v, j) => (v ? -1 : j)).filter((j) => j >= 0);
+                const idx = (hard || Math.random() < 0.6)
+                    ? Core.tttBestMove(board.slice(), 'O')
+                    : empties[Math.floor(Math.random() * empties.length)];
+                board[idx] = 'O';
+                paint();
+                thinking = false;
+                if (!check()) msgEl.textContent = 'Your move!';
+            }, 420 + Math.random() * 380);
+        }
+        viewEl.querySelectorAll('.ttt-diff').forEach((b) => b.addEventListener('click', () => {
+            hard = b.dataset.d === '1';
+            viewEl.querySelectorAll('.ttt-diff').forEach((x) => x.classList.toggle('sel', x === b));
+            newRound();
+        }));
+        paint();
     }
 
-    body.querySelector('.g2-new').addEventListener('click', newGame);
-
-    const keys = { ArrowLeft: 'left', ArrowRight: 'right', ArrowUp: 'up', ArrowDown: 'down' };
-    const onKey = (e) => {
-        if (WM.focused !== win || modalBusy) return;
-        if (keys[e.key]) { e.preventDefault(); move(keys[e.key]); }
-    };
-    document.addEventListener('keydown', onKey, true);
-    win.cleanups.push(() => document.removeEventListener('keydown', onKey, true));
-
-    /* board cells */
-    for (let i = 0; i < 16; i++) {
-        const c = document.createElement('div');
-        c.className = 'g2-cell';
-        board.appendChild(c);
-    }
-    /* swipe support */
-    let ts = null;
-    board.addEventListener('pointerdown', (e) => (ts = { x: e.clientX, y: e.clientY }));
-    board.addEventListener('pointerup', (e) => {
-        if (!ts) return;
-        const dx = e.clientX - ts.x, dy = e.clientY - ts.y;
-        ts = null;
-        if (Math.abs(dx) < 24 && Math.abs(dy) < 24) return;
-        move(Math.abs(dx) > Math.abs(dy) ? (dx > 0 ? 'right' : 'left') : (dy > 0 ? 'down' : 'up'));
-    });
-
-    newGame();
+    go(win.args && GAMES.some((g) => g.id === win.args.game) ? win.args.game : 'home');
 }
 
 /* ============================================================
@@ -2141,7 +3006,8 @@ const APPS = {
     terminal: { name: 'Terminal',    icon: '❯_', mono: true, grad: ['#2b3548', '#101623'], w: 700, h: 440, render: renderTerminal },
     paint:    { name: 'Paint',       icon: '🎨', grad: ['#ff6ea9', '#b25cff'], w: 880, h: 600, render: renderPaint },
     music:    { name: 'Aurora FM',   icon: '🎵', grad: ['#7c5cff', '#38bdf8'], w: 520, h: 430, render: renderMusic },
-    game2048: { name: '2048',        icon: '🔢', grad: ['#22d3a7', '#0ea5e9'], w: 420, h: 560, fixed: true, render: render2048 },
+    arcade:   { name: 'Arcade',      icon: '🕹️', grad: ['#f472b6', '#7c5cff'], w: 560, h: 680, render: renderArcade },
+    ai:       { name: 'Aurora AI',   icon: '✨', grad: ['#7c5cff', '#38bdf8'], w: 430, h: 560, render: renderAI },
     activity: { name: 'Activity',    icon: '📊', grad: ['#34d399', '#059669'], w: 780, h: 560, render: renderActivity },
     calendar: { name: 'Calendar',    icon: '📅', grad: ['#ff5f6d', '#ff9966'], w: 430, h: 500, render: renderCalendar },
     settings: { name: 'Settings',    icon: '⚙️', grad: ['#a8b0c0', '#6b7280'], w: 800, h: 560, render: renderSettings },
@@ -2149,7 +3015,7 @@ const APPS = {
     editor:   { name: 'Editor',      icon: '📄', grad: ['#94a3b8', '#64748b'], w: 640, h: 480, render: renderEditor, inDock: false },
     about:    { name: 'About Aurora OS', icon: '◍', grad: ['#5eead4', '#7c5cff'], w: 380, h: 430, fixed: true, render: renderAbout, inDock: false },
 };
-const DOCK_APPS = ['files', 'notes', 'calc', 'terminal', 'paint', 'music', 'game2048', 'activity', 'calendar', 'settings', 'sep', 'trash'];
+const DOCK_APPS = ['files', 'notes', 'calc', 'terminal', 'paint', 'music', 'arcade', 'ai', 'activity', 'calendar', 'settings', 'sep', 'trash'];
 
 /* ============================================================
    SPOTLIGHT
@@ -2177,6 +3043,12 @@ function buildSpotItems(q) {
         if (!q || app.name.toLowerCase().includes(q)) items.push({ icon: app.icon, name: app.name, hint: 'Application', run: () => openApp(id) });
     });
     const actions = [
+        { icon: '🕹️', name: 'Open Arcade', hint: 'Games', run: () => openApp('arcade') },
+        { icon: '🔢', name: 'Play 2048', hint: 'Game', run: () => openApp('arcade', { args: { game: 'g2048' } }) },
+        { icon: '💣', name: 'Minesweeper', hint: 'Game', run: () => openApp('arcade', { args: { game: 'mines' } }) },
+        { icon: '🐍', name: 'Snake', hint: 'Game', run: () => openApp('arcade', { args: { game: 'snake' } }) },
+        { icon: '🧠', name: 'Memory Match', hint: 'Game', run: () => openApp('arcade', { args: { game: 'memory' } }) },
+        { icon: '✨', name: 'Aurora AI', hint: 'Assistant', run: () => openApp('ai') },
         { icon: '🌓', name: 'Toggle Dark Mode', hint: 'Action', run: toggleDark },
         { icon: '🖼', name: 'Next Wallpaper', hint: 'Action', run: nextWallpaper },
         { icon: '🛏', name: 'Toggle Night Light', hint: 'Action', run: () => { OS.settings.nightLight = !OS.settings.nightLight; applySettings(); } },
@@ -2362,10 +3234,11 @@ function initDesktop() {
             if (w.maxed) {
                 el.style.width = (innerWidth - 12) + 'px';
                 el.style.height = (innerHeight - MENUBAR - 100) + 'px';
-                return;
+            } else {
+                el.style.left = Core.clamp(parseFloat(el.style.left) || 0, -el.offsetWidth + 90, Math.max(8, innerWidth - 90)) + 'px';
+                el.style.top = Core.clamp(parseFloat(el.style.top) || 0, MENUBAR, Math.max(MENUBAR, innerHeight - 44)) + 'px';
             }
-            el.style.left = Core.clamp(parseFloat(el.style.left) || 0, -el.offsetWidth + 90, Math.max(8, innerWidth - 90)) + 'px';
-            el.style.top = Core.clamp(parseFloat(el.style.top) || 0, MENUBAR, Math.max(MENUBAR, innerHeight - 44)) + 'px';
+            if (w.onResize) w.onResize();
         });
     });
 }

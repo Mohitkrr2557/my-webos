@@ -1,6 +1,6 @@
 # ◍ Aurora OS — a desktop that lives in your browser
 
-**Aurora OS** is a complete web-based operating system with a **glassmorphic aurora theme** — frosted-glass windows, a magnifying dock, a menu bar, live wallpapers, and a full set of working apps. Everything runs client-side in vanilla HTML/CSS/JS: no servers, no build step, no dependencies.
+**Aurora OS** is a complete web-based operating system with a **glassmorphic aurora theme** — frosted-glass windows, a magnifying dock, a menu bar, live wallpapers, a built-in AI assistant, an arcade with 5 games, and a full set of working apps. Everything runs client-side in vanilla HTML/CSS/JS: no servers, no build step, no dependencies.
 
 ![Theme](wallpapers/aurora.jpg)
 
@@ -19,24 +19,37 @@
 | **Window manager** | Drag, 8-way resize, zoom (double-click title bar), minimize-to-dock genie animation, focus/z-order management, traffic-light buttons |
 | **Dock** | macOS-style magnification, bounce on launch, running-app indicators, tooltips |
 | **Menu bar** | Aurora menu, live clock + mini-calendar popover, battery (Battery API), network status (online/offline), Control Center |
-| **Aurora Search** | `Ctrl+K` / `⌘K` spotlight — fuzzy search across apps, actions, files and notes |
+| **Aurora Search** | `Ctrl+K` / `⌘K` spotlight — fuzzy search across apps, actions, games, files and notes |
 | **Control Center** | Dark mode, night light, brightness, volume, accent picker, wallpaper shuffle |
-| **Persistence** | Everything (files, notes, settings, high scores, events) is saved to `localStorage` |
+| **Persistence** | Everything (files, notes, chats, scores, settings) is saved to `localStorage` |
 
-## Apps (11)
+## Apps (13)
 
 - **Files** — virtual file system with folders, text files, rename, move-to-trash
-- **Trash** — real trash folder with restore-by-drag-free simplicity and "Empty Trash"
+- **Trash** — real trash folder with "Empty Trash"
 - **Editor** — multi-window text editor with autosave
 - **Notes** — multi-note sidebar, live save
-- **Terminal** — `ls / cd / cat / echo / neofetch / open / theme / accent / wallpaper / uptime …` with command history (↑/↓)
-- **Calculator** — full keyboard support
+- **Terminal** — `ls / cd / cat / neofetch / open / theme / accent / wallpaper / chat …` with command history (↑/↓)
+- **Calculator** — standard + **scientific mode** (sin/cos/tan, √, x², 1/x, ln, log, x!, π, e), full keyboard support
 - **Paint** — canvas painting, brush sizes, eraser, export PNG
 - **Aurora FM** — *generative music* synthesized live with the Web Audio API (3 stations) + frequency visualizer
-- **2048** — the classic, keyboard + swipe, best score persisted
-- **Activity** — live CPU/memory/network charts + process table + FPS
+- **Aurora AI** — local chat assistant (no cloud!): opens apps, does math, controls the OS, tells jokes, remembers your name
+- **Arcade** — 5 games in one hub (see below)
+- **Activity** — live CPU/memory/network charts + process table
 - **Calendar** — month navigation, persistent event dots
 - **Settings** — theme, accent, wallpapers, storage usage, factory reset
+
+## 🕹️ Arcade (5 games)
+
+| Game | Highlights |
+|---|---|
+| **2048** | Fully animated sliding tiles, merge pulses, score bumps, swipe + keyboard |
+| **Minesweeper** | Easy/Medium/Hard, first-click safety, flood reveal, flags, chording, timer, best times |
+| **Snake** | Canvas-rendered neon snake, gradient body, increasing speed, pause/resume, swipe support |
+| **Memory Match** | 3D card flips, move counter, timer, best-score tracking |
+| **Tic-Tac-Toe** | Play against Aurora — with a real minimax AI (Chill & Genius modes) |
+
+All games share a polished shell: stat pills, blurred win/lose overlays, new-best celebrations, and persisted high scores.
 
 ## Run it
 
@@ -52,10 +65,9 @@ python3 -m http.server 8000
 ```
 index.html      — markup: boot, login, desktop, dock, overlays
 style.css       — the Borealis theme (CSS variables, glass, animations)
-core.js         — pure logic (2048 engine, virtual FS, calculator) — unit-testable in Node
-script.js       — window manager, dock, apps, spotlight, control center…
+core.js         — pure logic (2048 tile engine, minesweeper, minimax, virtual FS, calculator, safe math) — unit-testable in Node
+script.js       — window manager, dock, apps, AI assistant, arcade, spotlight, control center…
 wallpapers/     — 6 generated wallpapers
-legacy/         — the previous "Cyber OS" experiment this repo started from
 ```
 
 ## Keyboard shortcuts
@@ -64,7 +76,8 @@ legacy/         — the previous "Cyber OS" experiment this repo started from
 |---|---|
 | `Ctrl+K` / `⌘K` or `Ctrl+Space` | Aurora Search |
 | `Esc` | Close search / menus |
-| arrows (in 2048) | slide tiles |
+| arrows / WASD (in games) | steer 2048 & Snake |
+| `P` (in Snake) | pause |
 | `↑` / `↓` (in Terminal) | command history |
 
 ---
