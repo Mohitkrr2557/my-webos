@@ -3,111 +3,116 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cyber OS - Gaming Hub</title>
+    <title>Aurora OS</title>
     <link rel="stylesheet" href="style.css">
 </head>
-<body>
+<body class="dark">
 
-    <div id="boot-screen" class="screen">
-            <div class="boot-card">
-                <h1>🚀 CYBER OS v2.0 - GAMING HUB</h1>
-                <p id="boot-subtitle">Welcome, Space Cadet!</p>
-                <div class="boot-input-row">
-                    <select id="emoji-input">
-                        <option>👤</option>
-                        <option>🚀</option>
-                        <option>🌌</option>
-                        <option>🛸</option>
-                        <option>🌠</option>
-                        <option>💻</option>
-                        <option>🔥</option>
-                        <option>⚡</option>
-                        <option>🎮</option>
-                        <option>👾</option>
-                        <option>🤖</option>
-                        <option>💀</option>
-                        <option>🦾</option>
-                        <option>🔮</option>
-                        <option>⚔️</option>
-                        <option>🐉</option>
-                    </select>
-                    <input type="text" id="username-input" placeholder="Enter your username..." maxlength="20">
-                </div>
-                <div class="boot-input-row" id="password-row" style="margin-top:8px;">
-                    <input type="password" id="password-input" placeholder="Enter your password..." maxlength="30" style="flex:1;">
-                </div>
-                <div id="boot-status" style="margin-top:8px;font-size:0.8rem;color:#ff6666;min-height:1.2em;"></div>
-                <button id="boot-btn">SIGN IN</button>
+    <!-- ================= BOOT SCREEN ================= -->
+    <div id="boot-screen">
+        <div class="boot-inner">
+            <div class="boot-logo">
+                <div class="aurora-ring"></div>
+                <span class="boot-glyph">◍</span>
             </div>
+            <div class="boot-name">AURORA&nbsp;<span>OS</span></div>
+            <div class="boot-bar"><div id="boot-fill"></div></div>
+            <div id="boot-status">Initializing kernel…</div>
+        </div>
     </div>
 
-    <div id="desktop" class="screen hidden">
-        <canvas id="matrix-canvas"></canvas>
+    <!-- ================= LOGIN / LOCK SCREEN ================= -->
+    <div id="login-screen" class="hidden">
+        <div class="login-clockwrap">
+            <div id="login-time">00:00</div>
+            <div id="login-date">—</div>
+        </div>
+        <div class="login-card">
+            <div id="login-avatar">🦊</div>
+            <input id="login-name" placeholder="Your name" maxlength="18" spellcheck="false" autocomplete="off">
+            <div id="avatar-row"></div>
+            <button id="login-btn">Log In</button>
+        </div>
+        <div class="login-hint">Press&nbsp;<b>Enter</b>&nbsp;to continue</div>
+    </div>
 
+    <!-- ================= DESKTOP ================= -->
+    <div id="desktop" class="hidden">
+        <div id="wallpaper"></div>
+        <div id="aurora-veil"></div>
+
+        <!-- Menu bar -->
+        <div id="menubar">
+            <div class="mb-left">
+                <button id="mb-logo" title="Aurora menu">◍</button>
+                <span id="mb-appname">Files</span>
+            </div>
+            <div class="mb-right">
+                <span id="mb-battery" class="mb-icon" title="Battery">🔋</span>
+                <span id="mb-wifi" class="mb-icon" title="Network">📶</span>
+                <button id="mb-spotlight" class="mb-icon" title="Search — Ctrl+K">🔍</button>
+                <button id="mb-cc" class="mb-icon" title="Control Center">🎛️</button>
+                <button id="mb-clock" title="Clock">—</button>
+            </div>
+        </div>
+        <div id="mb-menu" class="hidden"></div>
+        <div id="clock-pop" class="hidden"></div>
+
+        <!-- Desktop icons -->
         <div id="desktop-icons"></div>
-        <div id="context-menu" class="context-menu hidden"></div>
-        <div id="start-menu" class="start-menu hidden"></div>
-        <div id="alt-tab-overlay" class="hidden"></div>
 
-        <!-- Snap layouts menu -->
-        <div id="snap-layout-menu" class="hidden"></div>
+        <!-- Windows live here -->
+        <div id="windows-layer"></div>
 
-        <!-- Emoji Picker -->
-        <div id="emoji-picker" class="hidden"></div>
+        <!-- Dock -->
+        <div id="dock-wrap"><div id="dock"></div></div>
 
-        <!-- Toast notifications container -->
-        <div id="toast-container"></div>
+        <!-- Control Center -->
+        <div id="control-center" class="hidden"></div>
 
-        <!-- Calendar flyout -->
-        <div id="calendar-flyout" class="flyout hidden"></div>
-
-        <!-- Action Center -->
-        <div id="action-center" class="flyout hidden"></div>
-
-        <div id="taskbar">
-            <span class="logo profile-logo" id="username-display"></span>
-            <div id="profile-menu" class="profile-menu hidden">
-                <button data-action="lock">🔒 Lock</button>
-                <button data-action="signout">🚪 Sign Out</button>
-                <div class="profile-separator"></div>
-                <button data-action="restart">🔄 Restart</button>
-                <button data-action="shutdown">⏻ Shutdown</button>
+        <!-- Spotlight -->
+        <div id="spotlight" class="hidden">
+            <div class="spot-card">
+                <div class="spot-row"><span class="spot-mag">🔍</span><input id="spot-input" placeholder="Aurora Search" spellcheck="false" autocomplete="off"></div>
+                <div id="spot-results"></div>
             </div>
-
-            <!-- Search bar -->
-            <div id="taskbar-search">
-                <span>🔍</span>
-                <input type="text" id="search-input" placeholder="Search apps..." maxlength="50">
-                <div id="search-results" class="hidden"></div>
-            </div>
-
-            <div class="taskbar-buttons">
-                <button class="taskbar-btn" data-app="notes">📝</button>
-                <button class="taskbar-btn" data-app="calendar">📅</button>
-                <button class="taskbar-btn" data-app="calc">🧮</button>
-                <button class="taskbar-btn" data-app="todo">✅</button>
-                <button class="taskbar-btn" data-app="ai">🤖</button>
-                <button class="taskbar-btn" data-app="settings">⚙️</button>
-                <span class="taskbar-separator"></span>
-                <button class="taskbar-btn" data-app="gaminghub">🎮</button>
-                <button class="taskbar-btn" data-app="highscores">🏆</button>
-                <button class="taskbar-btn" data-app="wallpapers">🖼</button>
-                <button class="taskbar-btn" data-app="taskmgr">📊</button>
-            </div>
-            <div id="system-tray">
-                <span class="tray-icon" id="tray-nightlight" title="Night Light">🌙</span>
-                <span class="tray-icon" id="tray-network" title="Network Status">📶</span>
-                <span class="tray-icon" id="tray-volume" title="Volume">🔊</span>
-                <span class="tray-icon" id="tray-battery" title="Battery">🔋</span>
-                <span class="tray-icon" id="tray-action-center" title="Action Center">💬</span>
-            </div>
-            <div id="show-desktop"></div>
-            <div id="taskbar-preview"></div>
-            <span id="clock" title="Click for calendar">00:00 AM</span>
         </div>
 
+        <!-- Context menu -->
+        <div id="context-menu" class="hidden"></div>
+
+        <!-- Toast notifications -->
+        <div id="toasts"></div>
+
+        <!-- Screen overlays -->
+        <div id="night-overlay" class="hidden"></div>
+        <div id="brightness-overlay"></div>
+        <div id="sleep-overlay" class="hidden"><div class="sleep-text">🌙 &nbsp;Sleeping — click anywhere to wake</div></div>
     </div>
 
+    <!-- ================= POWER SCREEN ================= -->
+    <div id="power-screen" class="hidden">
+        <div class="power-inner">
+            <div class="power-ring">⏻</div>
+            <div class="power-label">Aurora OS is powered off</div>
+            <button id="power-on-btn">Power On</button>
+        </div>
+    </div>
+
+    <!-- Modal dialog (prompts / confirms) -->
+    <div id="modal-overlay" class="hidden">
+        <div id="modal-card">
+            <div id="modal-title">Title</div>
+            <div id="modal-msg" class="hidden"></div>
+            <input id="modal-input" class="hidden" spellcheck="false" autocomplete="off">
+            <div id="modal-buttons">
+                <button id="modal-cancel">Cancel</button>
+                <button id="modal-ok" class="primary">OK</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="core.js"></script>
     <script src="script.js"></script>
 </body>
 </html>
